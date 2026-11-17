@@ -16,8 +16,6 @@ function [path, cost, stats] = dijkstra_graph(W, s, t)
 %
 %   Check:   check_my_code('dijkstra')
 
-error('task:todo', 'Task 4 not started -- delete this line and begin.');
-
 n      = size(W, 1);
 g      = inf(n, 1);       % no route known yet
 g(s)   = 0;               % the start costs nothing
@@ -49,16 +47,20 @@ while ~open_isempty(OPEN)
 
         % TODO 1 -- What does the route to v cost if we go through u?
         %           Available: g(u) and w(k).
-        gNew = inf;
+        gNew = g(u) + w(k);            % SOLVED: cost so far + this edge
 
         % TODO 2 -- Is that better than what we already knew about v?
-        if false
+        if gNew < g(v)                 % SOLVED: relax only if strictly cheaper
 
             % TODO 3 -- three lines:
             %             - store the new value in g(v)
             %             - set par(v)
             %             - push v with the right key
             %               ( open_push(OPEN, v, <key>) )
+            % SOLVED:
+            g(v)   = gNew;                    % remember the better cost
+            par(v) = u;                       % ... and where it came from
+            OPEN   = open_push(OPEN, v, g(v)); % key = g(v)
 
         end
     end

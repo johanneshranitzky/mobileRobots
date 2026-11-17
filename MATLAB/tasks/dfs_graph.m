@@ -14,8 +14,6 @@ function [path, cost, stats] = dfs_graph(W, s, t)
 %
 %   See also OPEN_NEW, GRAPH_NEIGHBORS, RECONSTRUCT_PATH.
 
-error('task:todo', 'Task 1 not started -- delete this line and begin.');
-
 n      = size(W, 1);
 par    = zeros(n, 1);     % par(v): which node did we come from to reach v
 seen   = false(n, 1);     % already put into OPEN once?
@@ -26,7 +24,7 @@ order  = zeros(1, 0);     % which nodes came out, in order
 %           'lifo' = last in, first out
 %           'fifo' = first in, first out
 %           (Do TODO 1 first. The wrong one is deliberately here.)
-OPEN = open_new('fifo');
+OPEN = open_new('lifo');   % SOLVED: LIFO = stack = depth-first
 
 seen(s) = true;
 OPEN    = open_push(OPEN, s);
@@ -45,7 +43,8 @@ while ~open_isempty(OPEN)
     trace_step(numel(order), u);
 
     % TODO 3 -- When are we done? Replace false by the condition.
-    if false
+    % SOLVED: stop as soon as the goal is taken out of OPEN
+    if u == t
         break
     end
 
@@ -59,6 +58,9 @@ while ~open_isempty(OPEN)
         % TODO 1 -- Two lines are missing here:
         %             - remember that we reached v coming from u
         %             - put v into OPEN  (open_push)
+        % SOLVED:
+        par(v)  = u;                   % we reached v coming from u
+        OPEN    = open_push(OPEN, v);  % v waits in OPEN (assign OPEN!)
         seen(v) = true;
     end
 end
