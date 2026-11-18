@@ -40,6 +40,16 @@ select{font:inherit;padding:3px 6px}
 .ctrl button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
 .ctrl button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 .var{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin:6px 0}.var div{background:#f3f6f8;border-radius:8px;padding:5px 9px;font-size:.85rem}.var b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+
+:root{--bg:#000;--card:#0d1117;--ink:#e6edf3;--mut:#9aa7b4;--line:#2a323c;--soft:#0b2a2a;--acc:#2dd4bf}
+body{background:#000}header{background:#04201f}
+.eq,.kv div,.var div,th,code{background:#161d26;color:#e6edf3}
+.sub{background:#0b2a22;color:#d1fae5}
+.ctrl button,.tog button{background:#0d1117;color:#e6edf3}.ctrl button.on{color:#000}
+td,th{border-color:#2a323c}
+.flow div{background:#121a23}
+svg#svg{background:#05090d!important;border-color:#2a323c!important}
+h2,h3{color:#e6edf3}
 </style></head><body><header><div class="w"><h1>car_primitives.m – Code und Formeln nebeneinander</h1><p>Links der Code aus tasks/car_primitives.m, rechts was jede Zeile rechnet – mit Zahlen zum Mitrechnen</p></div></header><main>
 <div class="card">Links der <b>echte Code</b> aus <code>tasks/car_primitives.m</code> (nur die ausführbaren Zeilen). Rechts steht, was die <b>angeklickte Zeile</b> rechnet – mit der Formel und den <b>Zahlen für die Lenkstufe, die du oben wählst</b>. Mit „Schritt q" gehst du durch die vier Teilschritte der Schleife.</div>
 
@@ -117,8 +127,8 @@ function exp(i,C){var dd=C.d*180/Math.PI,S=C.st,s=S[q],p=S[q-1],R=Math.abs(C.dth
  default:H='<h3>Zeilen 18–23: Ergebnis speichern</h3><p>Pro Lenkstufe wird ein Eintrag gefüllt:</p><table><tr><th>Feld</th><th>Wert jetzt</th><th>Bedeutung</th></tr><tr><td><code>delta</code></td><td>'+g(dd,1)+'°</td><td>Lenkwinkel</td></tr><tr><td><code>dx, dy</code></td><td>'+g(S[4].x,5)+' ; '+g(S[4].y,5)+'</td><td>Ende des Bogens</td></tr><tr><td><code>dth</code></td><td>'+g(S[4].th*180/Math.PI,3)+'°</td><td>Gesamtdrehung</td></tr><tr><td><code>pts</code></td><td>4 Posen</td><td>für die Körperprüfung</td></tr><tr><td><code>len</code></td><td>0,119 m</td><td>Bogenlänge</td></tr><tr><td><code>cost</code></td><td>'+g(0.119+0.02*Math.abs(pct/100),3)+'</td><td>0,119 + 0,02·|Stufe|</td></tr><tr><td><code>steps</code></td><td>4</td><td>nSub</td></tr></table><p>Der Kostenaufschlag (<code>wSteer</code> = 0,02) ist ein Tie-Breaker: bei gleich langen Routen gewinnt die mit weniger Lenken. Darum sind in Kapitel 09 die Suchkosten (6,40 m) größer als die gefahrene Strecke (6,05 m).</p>'}
  return H}
 function draw(C){var S=C.st,s='';var sc=1;
- function car(x,y,th,f,o){var c=Math.cos(th),sn=Math.sin(th),w=0.11,h=0.0525;return '<polygon points="'+[[-w,-h],[w,-h],[w,h],[-w,h]].map(function(a){return (x+a[0]*c-a[1]*sn).toFixed(4)+','+(-(y+a[0]*sn+a[1]*c)).toFixed(4)}).join(' ')+'" fill="'+f+'" fill-opacity="'+o+'" stroke="#334" stroke-width="0.0007"/>'}
- s+=car(0,0,0,'#94a3b8',0.2);
+ function car(x,y,th,f,o){var c=Math.cos(th),sn=Math.sin(th),w=0.11,h=0.0525;return '<polygon points="'+[[-w,-h],[w,-h],[w,h],[-w,h]].map(function(a){return (x+a[0]*c-a[1]*sn).toFixed(4)+','+(-(y+a[0]*sn+a[1]*c)).toFixed(4)}).join(' ')+'" fill="'+f+'" fill-opacity="'+o+'" stroke="#8aa" stroke-width="0.0007"/>'}
+ s+=car(0,0,0,'#94a3b8',0.25);
  var ex=S[4];s+=car(ex.x,ex.y,ex.th,'#0f766e',0.08);
  s+='<polyline fill="none" stroke="#b45309" stroke-width="0.003" points="'+S.slice(0,q+1).map(function(p){return p.x.toFixed(4)+','+(-p.y).toFixed(4)}).join(' ')+'"/>';
  S.slice(0,q+1).forEach(function(p,i){s+='<circle cx="'+p.x.toFixed(4)+'" cy="'+(-p.y).toFixed(4)+'" r="0.0035" fill="#b45309"/>'});
