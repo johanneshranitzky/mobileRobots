@@ -1,4 +1,6 @@
 %% EXPERIMENT_CAR_MAZE — my planner sends a car through a maze
+% Archiviert (fruehere Fassung von Kapitel 08). Vorher ausfuehren:
+%   setup_path; addpath(fullfile(pwd,'archive','car_in_maze'))
 % Before running:
 % 1. Finish car_in_maze.m in tasks/.
 % 2. Run check_my_code('astar') and check_car_maze.

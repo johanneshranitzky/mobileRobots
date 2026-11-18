@@ -19,8 +19,9 @@
 %[text] Für `A*` und Greedy baut `search_student_grid` die **Manhattan-Heuristik** zum Ziel $(r\_t, c\_t)$:
 %[text] $h(v) = |r\_v - r\_t| + |c\_v - c\_t|$
 %[text] Sie ist bei 4er-Nachbarschaft zulässig, weil man mindestens so viele Schritte braucht.
-if exist('setup_path', 'file') ~= 2, cd('..'), end   % falls MATLAB in livescripts/ gewechselt hat
-setup_path %[output:249f06d7]
+if exist('setup_path', 'file') ~= 2, cd(fullfile('..', '..')), end   % von archive/car_in_maze/ nach MATLAB/
+setup_path
+addpath(fullfile(pwd, 'archive', 'car_in_maze'))   % car_in_maze, animate_car_grid, check_car_maze %[output:249f06d7]
 [M, s, t] = maze_obstacles(18, 25, 0.20, 7);
 [rs, cs] = ind2sub(size(M), s) %[output:09c739d5] %[output:7ef323d8]
 [rt, ct] = ind2sub(size(M), t) %[output:1bcb0b19] %[output:4a08bd4c]

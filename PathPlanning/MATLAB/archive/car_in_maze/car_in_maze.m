@@ -9,7 +9,8 @@ function [path, cost, stats] = car_in_maze(M, s, t, method, showAnimation)
 %   TODO 3  If showAnimation is true, use animate_car_grid(M,path).
 %
 %   Visual playback is not a physically valid steering trajectory.
-%   Refer to ANLEITUNGEN/08_car_in_maze.md for the guided exercise.
+%   Archiviert: gehoert zur frueheren Fassung von Kapitel 08 (Auto im
+%   Labyrinth). Siehe README.md in diesem Ordner.
 %
 % =====================================================================
 %  ERKLAERUNG (Deutsch)
