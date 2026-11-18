@@ -8,3 +8,4 @@
 | `ERKLAERUNG/08_…html`, `09_…html`, `10_…html` | Eine Erklärseite pro Aufgabe (im Browser öffnen): was gemacht wurde, Wirkung, Ausgabe-Analyse, Prüfungsfragen. |
 
 Hinweis: Die erwarteten Ausgaben stammen aus einer Python-Nachrechnung, nicht aus MATLAB. Zuerst `LS10_Tuning.m` Abschnitt 0 ausführen (kleinster Radius 0,296 m = Guide-Variante, 0,104 m = Repo-Variante mit ±1-Krümmung).
+| `ERKLAERUNG/11_car_primitives_Code_und_Formeln.html` | `car_primitives.m` interaktiv: links der Code, rechts Formel und Zahlen zur angeklickten Zeile. |

@@ -1,0 +1,141 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>car_primitives.m – Code und Formeln nebeneinander</title><style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mut:#5b6675;--acc:#0f766e;--acc2:#b45309;--bad:#b91c1c;--ok:#15803d;--line:#dde2e8;--soft:#eef6f5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#0b3b38;color:#fff;padding:28px 20px}header .w,main{max-width:960px;margin:0 auto}
+header h1{margin:0 0 6px;font-size:1.7rem}header p{margin:0;opacity:.85}
+main{padding:20px}
+h2{margin:34px 0 10px;font-size:1.35rem;border-left:5px solid var(--acc);padding-left:10px}
+h3{margin:18px 0 6px;font-size:1.05rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.note{background:var(--soft);border-left:4px solid var(--acc);padding:10px 14px;border-radius:6px;margin:12px 0}
+.warn{background:#fff7ed;border-left:4px solid var(--acc2);padding:10px 14px;border-radius:6px;margin:12px 0}
+.exam{background:#eef2ff;border-left:4px solid #4f46e5;padding:10px 14px;border-radius:6px;margin:12px 0}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:.93rem}th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}th{background:#f0f3f6}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.hl{background:#fef3c7}.bad{color:var(--bad);font-weight:600}.ok{color:var(--ok);font-weight:600}
+code{background:#eef1f4;padding:1px 5px;border-radius:4px;font-size:.9em}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:1fr 1fr}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.tog{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0}
+.tog button{border:0;background:#fff;padding:7px 14px;cursor:pointer;font:inherit}.tog button.on{background:var(--acc);color:#fff}
+input[type=range]{width:100%}label{font-size:.92rem;color:var(--mut)}
+.big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:8px 0}
+.kv div{background:#f3f6f8;border-radius:8px;padding:8px 10px}.kv small{display:block;color:var(--mut)}
+details{margin:8px 0}summary{cursor:pointer;font-weight:600}
+svg text{font-family:inherit}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;background:#e2e8f0;font-size:.8rem}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}.flow div{flex:1;min-width:120px;background:#f3f6f8;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.88rem}.flow b{display:block;color:var(--acc)}
+select{font:inherit;padding:3px 6px}
+
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:860px){.split{grid-template-columns:1fr}}
+.code{background:#0f1720;color:#dbe4ee;border-radius:12px;padding:10px 0;font:13px/1.65 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto}
+.code .ln{display:block;padding:0 14px 0 8px;border-left:4px solid transparent;cursor:pointer;white-space:pre}
+.code .ln:hover{background:#18232f}.code .ln.on{background:#10353a;border-left-color:#2dd4bf}
+.code .c{color:#7d8b99}.code .k{color:#7dd3fc}.code .n{color:#fbbf24}
+.code .nr{display:inline-block;width:26px;color:#4b5a69;user-select:none}
+.side{position:sticky;top:8px}
+.eq{font:15px/1.6 ui-monospace,Menlo,Consolas,monospace;background:#f3f6f8;border-radius:8px;padding:8px 10px;margin:8px 0;overflow-x:auto}
+.sub{background:#ecfdf5;border-left:4px solid #0f766e;border-radius:6px;padding:8px 12px;margin:8px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92rem;overflow-x:auto}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0}
+.ctrl button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
+.ctrl button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.var{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px;margin:6px 0}.var div{background:#f3f6f8;border-radius:8px;padding:5px 9px;font-size:.85rem}.var b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+</style></head><body><header><div class="w"><h1>car_primitives.m – Code und Formeln nebeneinander</h1><p>Links der Code aus tasks/car_primitives.m, rechts was jede Zeile rechnet – mit Zahlen zum Mitrechnen</p></div></header><main>
+<div class="card">Links der <b>echte Code</b> aus <code>tasks/car_primitives.m</code> (nur die ausführbaren Zeilen). Rechts steht, was die <b>angeklickte Zeile</b> rechnet – mit der Formel und den <b>Zahlen für die Lenkstufe, die du oben wählst</b>. Mit „Schritt q" gehst du durch die vier Teilschritte der Schleife.</div>
+
+<div class="card">
+<div class="ctrl"><b>Lenkstufe k:</b><span id="kBtns"></span>
+<label style="margin-left:12px">oder frei: <b id="pctL">100</b> % von 22°</label><input type="range" id="pct" min="-100" max="100" step="5" value="100" oninput="setPct(this.value)" style="width:200px"></div>
+<div class="ctrl"><b>Schleife, Schritt q:</b><span id="qBtns"></span><small>(in <code>for q = 1:nSub</code>)</small></div>
+</div>
+
+<div class="split">
+<div>
+<div class="code" id="code"></div>
+<p><small>Klicke eine Zeile an (oder nutze die Pfeiltasten ↑↓, wenn der Code Fokus hat).</small></p>
+</div>
+<div class="side">
+<div class="card" id="exp"></div>
+<svg id="svg" viewBox="-0.13 -0.11 0.30 0.22" style="width:100%;background:#fbfcfd;border:1px solid var(--line);border-radius:10px"></svg>
+<small>grau: Start · grün: Ende · orange: Bogen bis Schritt q · blau gestrichelt: Blickrichtung θ_mitte · rot: Fahrtrichtung θ_mitte + β</small><div class="var" id="vars"></div>
+</div></div>
+
+<h2>Zusammenhang in einem Bild</h2>
+<div class="card">
+<div class="flow">
+<div><b>① Lenkwinkel</b>delta → d (Bogenmaß)</div>
+<div><b>② Schwimmwinkel</b>beta: wohin die <i>Mitte</i> wirklich fährt</div>
+<div><b>③ Drehrate</b>dthdS: Drehung pro Meter</div>
+<div><b>④ Bogen laufen</b>4 Teilschritte, Mittelpunktsverfahren</div>
+<div><b>⑤ Speichern</b>dx, dy, dth, pts, cost</div></div>
+<p><b>Merke für das Gespräch:</b> ① bis ③ sind reine Formeln (je eine Zeile), ④ ist ein kleines Integrationsverfahren, ⑤ ist Buchhaltung. Die Geschwindigkeit kommt nirgends vor – sie kürzt sich in ③ weg.</p></div>
+</main><script>
+function tog(id,labels,cb,init){var el=document.getElementById(id);el.className='tog';el.innerHTML='';labels.forEach(function(l,i){var b=document.createElement('button');b.textContent=l;b.onclick=function(){[].forEach.call(el.children,function(c){c.className=''});b.className='on';cb(i)};el.appendChild(b)});el.children[init||0].className='on';cb(init||0)}
+function fmt(x,d){return (+x).toFixed(d).replace('.',',')}
+
+
+var P={L:0.12,lr:0.06,dm:22,arc:0.119,nSub:4},levels=[-1,-0.5,0,0.5,1],pct=100,q=4,sel=0;
+var LINES=[
+ [0,'<span class="k">function</span> prim = car_primitives(P)',0],
+ [1,'nSub = 4;',0],
+ [2,'ds   = P.arc / nSub;',0],
+ [3,'<span class="k">for</span> k = 1:numel(P.steerLevels)',1],
+ [4,'    delta = P.steerLevels(k) * P.deltaMax;   <span class="c">% Grad</span>',1],
+ [5,'    d     = deg2rad(delta);                  <span class="c">% Bogenmaß</span>',1],
+ [6,'    beta  = atan((P.lr / P.L) * tan(d));     <span class="c">% TODO 1</span>',2],
+ [7,'    dthdS = cos(beta) * tan(d) / P.L;        <span class="c">% TODO 2</span>',3],
+ [8,'    x = 0; y = 0; th = 0;',4],
+ [9,'    pts = zeros(nSub, 3);',4],
+ [10,'    <span class="k">for</span> q = 1:nSub                          <span class="c">% TODO 3</span>',5],
+ [11,'        thMid = th + dthdS*ds/2;             <span class="c">% 3a Richtung in der Mitte</span>',5],
+ [12,'        th = th + dthdS*ds;                  <span class="c">% 3b Drehung addieren</span>',6],
+ [13,'        x = x + ds * cos(thMid + beta);      <span class="c">% 3c</span>',7],
+ [14,'        y = y + ds * sin(thMid + beta);      <span class="c">% 3d</span>',7],
+ [15,'        pts(q,:) = [x, y, th];               <span class="c">% Pose merken</span>',8],
+ [16,'    <span class="k">end</span>',8],
+ [17,'    prim(k).delta = delta;  prim(k).dx = x;',9],
+ [18,'    prim(k).dy = y;         prim(k).dth = th;',9],
+ [19,'    prim(k).pts = pts;      prim(k).len = P.arc;',9],
+ [20,'    prim(k).cost = P.arc + P.wSteer * abs(P.steerLevels(k));',9],
+ [21,'    prim(k).steps = nSub;',9],
+ [22,'<span class="k">end</span>',1]];
+function calc(){var d=pct/100*P.dm*Math.PI/180,beta=Math.atan(P.lr/P.L*Math.tan(d)),dth=Math.cos(beta)*Math.tan(d)/P.L,ds=P.arc/P.nSub,x=0,y=0,th=0,st=[{x:0,y:0,th:0,tm:0}];
+ for(var i=0;i<P.nSub;i++){var tm=th+dth*ds/2;th+=dth*ds;x+=ds*Math.cos(tm+beta);y+=ds*Math.sin(tm+beta);st.push({x:x,y:y,th:th,tm:tm})}
+ return {d:d,beta:beta,dth:dth,ds:ds,st:st}}
+function g(v,n){return fmt(v,n)}
+function exp(i,C){var dd=C.d*180/Math.PI,S=C.st,s=S[q],p=S[q-1],R=Math.abs(C.dth)<1e-9?'∞':fmt(1/Math.abs(C.dth),3);var H;
+ switch(LINES[i][2]){
+ case 0:H='<h3>Zeilen 1–3: Funktionskopf und Konstanten</h3><p>Die Funktion bekommt alle Fahrzeugdaten <code>P</code> aus <code>cc_params</code> und liefert ein Array <code>prim</code> mit 5 Einträgen zurück.</p><div class="eq">nSub = 4   (Teilschritte pro Bogen)<br>ds = P.arc / nSub</div><div class="sub">ds = 0,119 / 4 = <b>0,02975 m</b></div><p>Warum 4? Ein Bogen wird nicht in einem Stück gerechnet, sondern in vier kurzen, fast geraden Stücken. Vier genügen: Fehler unter 0,05 mm. Und 4 Posen braucht <code>car_neighbors</code> später, um den ganzen Körper zu prüfen.</p>';break;
+ case 1:H='<h3>Zeilen 4–6: Lenkstufe → Winkel</h3><p>Die Schleife läuft über die fünf Lenkstufen <code>[-1 -0.5 0 0.5 1]</code>. Die Stufe ist ein Bruchteil des maximalen Einschlags (22°).</p><div class="eq">delta = Stufe · deltaMax<br>d = delta · π/180</div><div class="sub">delta = '+g(levels[sel]===undefined?pct/100:pct/100,2)+' · 22° = <b>'+g(dd,2)+'°</b><br>d = <b>'+g(C.d,4)+' rad</b></div><p><code>tan</code>, <code>cos</code> &amp; Co. rechnen in MATLAB in <b>Bogenmaß</b>, deshalb <code>deg2rad</code>. Vergisst man das, wirkt der Lenkwinkel 57-mal zu groß.</p>';break;
+ case 2:H='<h3>Zeile 7 (TODO 1): Schwimmwinkel β</h3><p>Der Bezugspunkt der Pose ist die <b>Mitte des Körpers</b>, nicht die Hinterachse. Beim Lenken schaut die Karosserie in eine andere Richtung, als sich die Mitte bewegt. Dieser Winkel dazwischen ist β.</p><div class="eq">β = atan( (lr / L) · tan δ )</div><div class="sub">β = atan( (0,06 / 0,12) · tan('+g(dd,2)+'°) )<br>&nbsp;&nbsp; = atan( 0,5 · '+g(Math.tan(C.d),4)+' ) = <b>'+g(C.beta*180/Math.PI,2)+'°</b></div><p><b>lr/L = 0,5</b>, weil die Mitte genau auf halbem Weg zwischen Hinter- und Vorderachse liegt. Bei Volllenkung ist β = 11,42° – groß genug, dass man ihn nicht weglassen darf (sonst 23 mm Fehler am Bogenende).</p>';break;
+ case 3:H='<h3>Zeile 8 (TODO 2): Drehung pro Meter</h3><p>Wie viel dreht sich das Auto, wenn es 1 m fährt? <b>Die Geschwindigkeit kürzt sich weg</b> (θ̇ = v·…, geteilt durch v), deshalb gilt der Bogen bei jedem Tempo – darum kann die Suche in Metern rechnen.</p><div class="eq">dθ/ds = cos β · tan δ / L</div><div class="sub">dθ/ds = cos('+g(C.beta*180/Math.PI,2)+'°) · '+g(Math.tan(C.d),4)+' / 0,12<br>&nbsp;&nbsp; = '+g(Math.cos(C.beta),4)+' · '+g(Math.tan(C.d),4)+' / 0,12 = <b>'+g(C.dth,3)+' rad/m</b><br>Kreisradius R = 1 / |dθ/ds| = <b>'+R+' m</b></div><p>Volllenkung: 3,300 rad/m ⇒ R = 0,303 m. Die Strecke hat einen Gang von 0,59 m Breite – das Auto passt gerade eben um die Ecke.</p>';break;
+ case 4:H='<h3>Zeilen 9–10: Startzustand</h3><p>Jeder Bogen beginnt im <b>Fahrzeugsystem</b>: Auto im Ursprung, schaut nach +x (θ = 0). Später dreht und verschiebt <code>car_neighbors</code> den fertigen Bogen an die echte Stelle.</p><div class="eq">x = 0, y = 0, θ = 0<br>pts = Platz für 4 Posen (4 × 3 Zahlen)</div><p>Die Matrix <code>pts</code> wird in der Schleife gefüllt: pro Teilschritt eine Zeile <code>[x y θ]</code>.</p>';break;
+ case 5:H='<h3>Zeilen 11–12 (3a): Richtung in der Mitte des Teilschritts</h3><p>Während eines Teilschritts dreht sich das Auto ein Stück weiter. Welche Richtung nimmt man für die Bewegung? Anfang → zu wenig gedreht, Ende → zu viel. Die <b>Mitte</b> gleicht beides fast aus.</p><div class="eq">θ_mitte = θ + (dθ/ds · ds) / 2</div><div class="sub">Schritt q = '+q+':<br>θ_mitte = '+g(p.th*180/Math.PI,3)+'° + '+g(C.dth*C.ds*180/Math.PI/2,3)+'° = <b>'+g(s.tm*180/Math.PI,3)+'°</b></div><p>Fehler gegenüber dem exakten Kreis bei Volllenkung: unter 0,05 mm (Anfang/Ende: etwa 5,8 mm).</p>';break;
+ case 6:H='<h3>Zeile 13 (3b): Drehung aufaddieren</h3><p>Nach dem Teilschritt hat sich das Auto um <code>dthdS·ds</code> weitergedreht. Das neue θ ist die Richtung, in der das nächste Stück beginnt <b>und</b> später die gespeicherte Richtung der Pose.</p><div class="eq">θ_neu = θ + dθ/ds · ds</div><div class="sub">θ = '+g(p.th*180/Math.PI,3)+'° + '+g(C.dth*C.ds*180/Math.PI,3)+'° = <b>'+g(s.th*180/Math.PI,3)+'°</b></div><p>Nach 4 Schritten ist θ = <b>'+g(S[4].th*180/Math.PI,2)+'°</b>. Bei Volllenkung ≈ 22,5° = genau ein Richtungsschritt des Gitters (360°/16). Das ist der Grund für <code>arc = 0,119</code>.</p>';break;
+ case 7:H='<h3>Zeilen 14–15 (3c, 3d): Position weiterschieben</h3><p>Das Auto fährt <code>ds</code> weit – aber nicht in Richtung θ, sondern in Richtung der <b>Fahrtrichtung θ_mitte + β</b> (Karosserie plus Schwimmwinkel). Cosinus gibt den x-, Sinus den y-Anteil.</p><div class="eq">x_neu = x + ds · cos(θ_mitte + β)<br>y_neu = y + ds · sin(θ_mitte + β)</div><div class="sub">Fahrtrichtung = '+g(s.tm*180/Math.PI,3)+'° + '+g(C.beta*180/Math.PI,2)+'° = <b>'+g((s.tm+C.beta)*180/Math.PI,3)+'°</b><br>x = '+g(p.x,5)+' + 0,02975 · '+g(Math.cos(s.tm+C.beta),4)+' = <b>'+g(s.x,5)+'</b><br>y = '+g(p.y,5)+' + 0,02975 · '+g(Math.sin(s.tm+C.beta),4)+' = <b>'+g(s.y,5)+'</b></div><p>Typischer Fehler: <code>cos(thMid)</code> ohne <code>+ beta</code>. Dann endet der Bogen etwa 23 mm neben dem richtigen Punkt.</p>';break;
+ case 8:H='<h3>Zeilen 16–17: Pose merken</h3><p>Nach jedem Teilschritt wird <code>[x y θ]</code> in <code>pts</code> abgelegt.</p><div class="sub">pts('+q+',:) = [ '+g(s.x,5)+' , '+g(s.y,5)+' , '+g(s.th*180/Math.PI,2)+'° ]</div><p>Warum? <code>car_neighbors</code> muss das <b>Rechteck des Autos</b> an allen vier Stellen gegen die Wand prüfen. Würde man nur das Ende prüfen, kämen Bögen durch, die in der Mitte die Wand streifen (Prüffall 6).</p>';break;
+ default:H='<h3>Zeilen 18–23: Ergebnis speichern</h3><p>Pro Lenkstufe wird ein Eintrag gefüllt:</p><table><tr><th>Feld</th><th>Wert jetzt</th><th>Bedeutung</th></tr><tr><td><code>delta</code></td><td>'+g(dd,1)+'°</td><td>Lenkwinkel</td></tr><tr><td><code>dx, dy</code></td><td>'+g(S[4].x,5)+' ; '+g(S[4].y,5)+'</td><td>Ende des Bogens</td></tr><tr><td><code>dth</code></td><td>'+g(S[4].th*180/Math.PI,3)+'°</td><td>Gesamtdrehung</td></tr><tr><td><code>pts</code></td><td>4 Posen</td><td>für die Körperprüfung</td></tr><tr><td><code>len</code></td><td>0,119 m</td><td>Bogenlänge</td></tr><tr><td><code>cost</code></td><td>'+g(0.119+0.02*Math.abs(pct/100),3)+'</td><td>0,119 + 0,02·|Stufe|</td></tr><tr><td><code>steps</code></td><td>4</td><td>nSub</td></tr></table><p>Der Kostenaufschlag (<code>wSteer</code> = 0,02) ist ein Tie-Breaker: bei gleich langen Routen gewinnt die mit weniger Lenken. Darum sind in Kapitel 09 die Suchkosten (6,40 m) größer als die gefahrene Strecke (6,05 m).</p>'}
+ return H}
+function draw(C){var S=C.st,s='';var sc=1;
+ function car(x,y,th,f,o){var c=Math.cos(th),sn=Math.sin(th),w=0.11,h=0.0525;return '<polygon points="'+[[-w,-h],[w,-h],[w,h],[-w,h]].map(function(a){return (x+a[0]*c-a[1]*sn).toFixed(4)+','+(-(y+a[0]*sn+a[1]*c)).toFixed(4)}).join(' ')+'" fill="'+f+'" fill-opacity="'+o+'" stroke="#334" stroke-width="0.0007"/>'}
+ s+=car(0,0,0,'#94a3b8',0.2);
+ var ex=S[4];s+=car(ex.x,ex.y,ex.th,'#0f766e',0.08);
+ s+='<polyline fill="none" stroke="#b45309" stroke-width="0.003" points="'+S.slice(0,q+1).map(function(p){return p.x.toFixed(4)+','+(-p.y).toFixed(4)}).join(' ')+'"/>';
+ S.slice(0,q+1).forEach(function(p,i){s+='<circle cx="'+p.x.toFixed(4)+'" cy="'+(-p.y).toFixed(4)+'" r="0.0035" fill="#b45309"/>'});
+ var a=S[q-1],b=S[q],L=0.06;
+ s+='<line x1="'+a.x+'" y1="'+(-a.y)+'" x2="'+(a.x+L*Math.cos(b.tm)).toFixed(4)+'" y2="'+(-(a.y+L*Math.sin(b.tm))).toFixed(4)+'" stroke="#2563eb" stroke-width="0.0022" stroke-dasharray="0.004"/>';
+ s+='<line x1="'+a.x+'" y1="'+(-a.y)+'" x2="'+(a.x+L*Math.cos(b.tm+C.beta)).toFixed(4)+'" y2="'+(-(a.y+L*Math.sin(b.tm+C.beta))).toFixed(4)+'" stroke="#b91c1c" stroke-width="0.003"/>';
+ document.getElementById('svg').innerHTML=s}
+function render(){var C=calc();document.getElementById('exp').innerHTML=exp(sel,C);
+ document.querySelectorAll('#code .ln').forEach(function(e,i){e.className='ln'+(LINES[i][2]==LINES[sel][2]?' on':'')});
+ var s=C.st[q];document.getElementById('vars').innerHTML='<div>δ<b>'+fmt(C.d*180/Math.PI,2)+'°</b></div><div>beta<b>'+fmt(C.beta*180/Math.PI,2)+'°</b></div><div>dthdS<b>'+fmt(C.dth,3)+'</b></div><div>q = '+q+' → x<b>'+fmt(s.x,5)+'</b></div><div>y<b>'+fmt(s.y,5)+'</b></div><div>th<b>'+fmt(s.th*180/Math.PI,2)+'°</b></div>';
+ draw(C);document.querySelectorAll('#kBtns button').forEach(function(b,i){b.className=(Math.abs(levels[i]*100-pct)<0.1)?'on':''});
+ document.querySelectorAll('#qBtns button').forEach(function(b,i){b.className=(i+1==q)?'on':''});document.getElementById('pctL').textContent=pct}
+function setPct(v){pct=+v;render()}
+(function(){var c=document.getElementById('code'),h='';LINES.forEach(function(l,i){h+='<span class="ln" tabindex="0" data-i="'+i+'"><span class="nr">'+(i+1)+'</span>'+l[1]+'</span>'});c.innerHTML=h;
+ c.onclick=function(e){var t=e.target.closest('.ln');if(t){sel=+t.dataset.i;render()}};
+ c.onkeydown=function(e){if(e.key=='ArrowDown'){sel=Math.min(LINES.length-1,sel+1);render();e.preventDefault()}if(e.key=='ArrowUp'){sel=Math.max(0,sel-1);render();e.preventDefault()}};
+ var k=document.getElementById('kBtns');levels.forEach(function(l){var b=document.createElement('button');b.textContent=l;b.onclick=function(){pct=l*100;document.getElementById('pct').value=pct;render()};k.appendChild(b)});
+ var qb=document.getElementById('qBtns');[1,2,3,4].forEach(function(n){var b=document.createElement('button');b.textContent=n;b.onclick=function(){q=n;render()};qb.appendChild(b)});
+ sel=6;render()})();
+</script></body></html>
