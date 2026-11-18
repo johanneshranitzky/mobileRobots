@@ -1,0 +1,157 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aufgabe 9 – Von der Route zur Rundenzeit (Oval)</title><style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mut:#5b6675;--acc:#0f766e;--acc2:#b45309;--bad:#b91c1c;--ok:#15803d;--line:#dde2e8;--soft:#eef6f5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#0b3b38;color:#fff;padding:28px 20px}header .w,main{max-width:960px;margin:0 auto}
+header h1{margin:0 0 6px;font-size:1.7rem}header p{margin:0;opacity:.85}
+main{padding:20px}
+h2{margin:34px 0 10px;font-size:1.35rem;border-left:5px solid var(--acc);padding-left:10px}
+h3{margin:18px 0 6px;font-size:1.05rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.note{background:var(--soft);border-left:4px solid var(--acc);padding:10px 14px;border-radius:6px;margin:12px 0}
+.warn{background:#fff7ed;border-left:4px solid var(--acc2);padding:10px 14px;border-radius:6px;margin:12px 0}
+.exam{background:#eef2ff;border-left:4px solid #4f46e5;padding:10px 14px;border-radius:6px;margin:12px 0}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:.93rem}th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}th{background:#f0f3f6}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.hl{background:#fef3c7}.bad{color:var(--bad);font-weight:600}.ok{color:var(--ok);font-weight:600}
+code{background:#eef1f4;padding:1px 5px;border-radius:4px;font-size:.9em}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:1fr 1fr}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.tog{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0}
+.tog button{border:0;background:#fff;padding:7px 14px;cursor:pointer;font:inherit}.tog button.on{background:var(--acc);color:#fff}
+input[type=range]{width:100%}label{font-size:.92rem;color:var(--mut)}
+.big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:8px 0}
+.kv div{background:#f3f6f8;border-radius:8px;padding:8px 10px}.kv small{display:block;color:var(--mut)}
+details{margin:8px 0}summary{cursor:pointer;font-weight:600}
+svg text{font-family:inherit}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;background:#e2e8f0;font-size:.8rem}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}.flow div{flex:1;min-width:120px;background:#f3f6f8;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.88rem}.flow b{display:block;color:var(--acc)}
+select{font:inherit;padding:3px 6px}
+</style></head><body><header><div class="w"><h1>Aufgabe 9 – Von der Route zur Rundenzeit (Oval)</h1><p>Was ich gemacht habe, wie sich jede Einstellung auswirkt und wie die Ausgabe zustande kommt</p></div></header><main>
+<div class="warn"><b>Ehrlich vorweg:</b> MATLAB konnte ich hier nicht starten. Die Zahlen unten stammen aus einer Nachrechnung des Labors. Mit der Krümmungs-Messbasis <b>±3</b> stimmt sie mit <i>jeder</i> Zahl im Guide überein (Variante „Guide"). Der Code in <code>tools/cc_speed_profile.m</code> im Repo misst aber über <b>±1</b> (Variante „Repo") – dann sind die Zeiten länger. Welche Variante dein MATLAB liefert, siehst du an <b>einer</b> Zahl (Abschnitt 8). Die Planung ist in beiden Fällen identisch.</div>
+
+<h2>1. Worum geht's</h2>
+<div class="card">Aus der Pose-Suche aus Kapitel 08 wird eine <b>Runde mit Rundenzeit</b>. Dazwischen liegen fünf Stufen. Nur die erste (die Suche) ist deine Arbeit aus Kapitel 08; die anderen vier sind fertig – wir lesen sie und verstehen, was sie bewirken.
+<div class="flow" style="margin-top:10px">
+<div><b>1 Plan</b><code>cc_lap_plan</code><br>Modell → Posen (nur Form)</div>
+<div><b>2 Resample</b><code>cc_resample_path</code><br>Posen → Punkte alle 4 cm</div>
+<div><b>3 Tempo</b><code>cc_speed_profile</code><br>Punkte → Soll-Geschwindigkeit</div>
+<div><b>4 Regler</b><code>cc_pure_pursuit</code><br>→ Gas &amp; Lenkung</div>
+<div><b>5 Simulator</b><code>cc_simulate</code><br>→ Rundenzeit / Crash</div></div></div>
+
+<h2>2. Was ich gemacht habe</h2>
+<div class="card"><ul>
+<li>Live Script <code>LS09_Rundkurs.m</code>: führt <code>cc_lap_plan</code>, das ganze Experiment, den „Vollgas"-Versuch, den <code>safety</code>-Durchlauf und die Ankunftsrichtungen (4b) aus – mit Erklärung bei jedem Schritt.</li>
+<li><b>Am Repo-Code habe ich nichts verändert</b> (<code>tools/</code> bleibt laut README unangetastet).</li>
+<li>Die Abweichung ±1 ↔ ±3 gefunden und im Live Script nachprüfbar gemacht (Abschnitt 9 dort; <code>local_kappa</code> am Dateiende).</li>
+</ul></div>
+
+<h2>3. Schritt 1 – Warum eine Runde eine <i>Kette</i> von Suchen ist</h2>
+<div class="card"><b>Vorhersage-Frage:</b> Start = Ziel. Welche Route liefert A*? <b>Antwort:</b> Die Länge <b>0</b>. A* stoppt, sobald das Ziel erreicht ist – und der Startknoten ist schon das Ziel. Das Auto bliebe stehen. Darum: <b>Checkpoints</b>. Jedes Leg läuft von der Pose, in der das vorige endete, zum nächsten Ort; das letzte Leg zurück zum Start. Die Reihenfolge der Checkpoints legt die Fahrtrichtung fest.</div>
+<div class="tog" id="legT"></div>
+<svg id="svgL" viewBox="0 0 3.2 2.0" style="width:100%;max-height:360px;background:#fbfcfd;border:1px solid var(--line);border-radius:8px"></svg>
+<table id="legTab"><tr><th>Leg</th><th>Ziel</th><th class="n">Posen</th><th class="n">Kosten</th><th class="n">Expansionen</th><th class="n">Ankunftsrichtung</th></tr>
+<tr><td>1</td><td>(2,90 ; 1,00)</td><td class="n">13</td><td class="n">1,48 m</td><td class="n">36</td><td class="n">+56,0°</td></tr>
+<tr><td>2</td><td>(1,60 ; 1,50)</td><td class="n">14</td><td class="n">1,66 m</td><td class="n">25</td><td class="n">+179,5°</td></tr>
+<tr><td>3</td><td>(0,30 ; 1,00)</td><td class="n">14</td><td class="n">1,60 m</td><td class="n">65</td><td class="n">+235,5°</td></tr>
+<tr><td>4</td><td>(1,60 ; 0,50)</td><td class="n">14</td><td class="n">1,67 m</td><td class="n">59</td><td class="n">+348,0°</td></tr></table>
+<div class="card"><b>Wie liest man das?</b> 52 Posen, 185 Expansionen insgesamt, Runde schließt (Lücke 77 mm &lt; 12 cm, 12° ≤ 45°). Die Zahl in „Kosten" (6,40 m) ≠ gefahrene Strecke (6,05 m):
+<ul><li>51 Züge × 0,119 m = 6,07 m ≈ 6,05 m Strecke (Sehnen).</li><li>Dazu <b>0,33 m</b> Lenkzuschläge (<code>wSteer·|Stufe|</code>, 0,02 m bei voller Lenkung): <b>Tie-Breaker</b> – bei gleich langen Routen gewinnt die mit weniger Lenken.</li></ul>
+Die Spalte <b>Ankunftsrichtung</b> ist das Wichtigste: Ein Checkpoint legt einen <i>Ort</i> fest, keine Pose. Jedes Leg übergibt dem nächsten seine Richtung.</div>
+
+<h2>4. Schritt 2 – Fahren: wie die Ausgabe zustande kommt</h2>
+<table><tr><th>Größe</th><th>Guide (±3)</th><th>Repo (±1)</th></tr>
+<tr><td>Route</td><td>6,05 m</td><td>6,05 m</td></tr>
+<tr><td>engste Kurve</td><td>R = 0,296 m</td><td class="bad">R = 0,104 m (!)</td></tr>
+<tr><td>langsamster / schnellster Soll-Punkt</td><td>1,52 / 2,46 m/s</td><td>0,90 / 2,14 m/s</td></tr>
+<tr><td><b>Rundenzeit</b></td><td><b>4,40 s</b></td><td><b>5,48 s</b></td></tr>
+<tr><td>erreichte Höchstgeschwindigkeit</td><td>1,69 m/s</td><td>1,44 m/s</td></tr>
+<tr><td>am Grip-Limit</td><td>0 von 111</td><td>0 von 138</td></tr>
+<tr><td>Spurfehler</td><td>max 63 mm, Ø 21 mm</td><td>max 64 mm, Ø 21 mm</td></tr></table>
+<h3>Zwei Geschwindigkeits-Decken</h3>
+<div class="grid g2">
+<div class="card"><b>Decke 1: Grip (das Profil).</b> In der Kurve zieht das Auto mit <code>v²/R</code> zur Seite; die Reifen halten höchstens 7,85 m/s². Also: <code>v ≤ √(7,85 · R)</code>. Probiere:<br>
+<label>Radius R: <b id="rL">0,296</b> m</label><input type="range" id="rr" min="0.1" max="1.5" step="0.002" value="0.296" oninput="rcalc()">
+<div class="kv" id="kvR"></div>
+In Zeile <code>vRef(turning) = min(VMax, sqrt(AyMax./kappa))</code>. Engster Radius 0,296 m ⇒ √(7,85·0,296) = <b>1,52 m/s</b> = „langsamster Punkt". Der Rückwärtsdurchlauf (<code>vRef(k) = min(vRef(k), sqrt(vRef(k+1)²+2·ABrake·ds))</code>) senkt das Tempo schon <i>vor</i> der Kurve, wie ein Fahrer, der früh bremst.</div>
+<div class="card"><b>Decke 2: der Regler.</b> <code>Gas = kv·(vSoll − v)</code> ist ein P-Regler: Er braucht einen <b>Fehler</b>, um Gas zu geben, hinkt also einem steigenden Soll immer hinterher. Soll steigt und fällt alle halbe Sekunde ⇒ er holt nie auf: Das Profil erlaubt 2,46 m/s, das Auto schafft 1,69. Die Lücke von 0,77 m/s ist verschenkte Zeit – <code>kv</code> ist einer der acht Werte in Kapitel 10.<br><br>
+<label>Soll springt von 1,0 auf 2,0 m/s. kv = <b id="kvL">90</b> % pro m/s</label><input type="range" id="kv" min="20" max="250" step="5" value="90" oninput="kvcalc()">
+<svg id="svgK" viewBox="0 0 300 120" style="width:100%;background:#fbfcfd;border:1px solid var(--line);border-radius:8px"></svg>
+<small id="kvT"></small></div></div>
+
+<h2>5. Schritt 3 – Warum Vollgas auf derselben Route crasht</h2>
+<div class="card"><b>Ausgabe (beide Varianten):</b> <code>crashed: 1 at (2.64, 1.61) after 1.44 s</code>.<br>Die Route ist unverändert, das Auto fährt trotzdem hinaus. <b>Was die Suche garantiert hat:</b> dass es eine <i>geometrische</i> Bahn gibt, die die Lenkung erzeugen kann und deren überstrichenes Rechteck die Wände meidet. <b>Was nicht:</b> irgendetwas über Tempo. Die Geschwindigkeit hat sich aus <code>dθ/ds</code> gekürzt – deshalb konnte die Suche sie ignorieren, und deshalb kann sie nichts über sie sagen. Tempo kommt nur über den <b>Grip</b> herein (<code>a_y = v·θ̇ ≤ 7,85</code>), und Grip ist keine geometrische Eigenschaft. Eine Route ist eine <b>Form</b>; erst das Tempoprofil macht daraus einen Plan: 4,40 s und fertige Runde statt Crash nach 1,44 s.</div>
+
+<h2>6. Schritt 4 – <code>safety</code> von 0 bis 0,12 m</h2>
+<div class="tog" id="safT"></div>
+<svg id="svgS" viewBox="0 0 560 250" style="width:100%;background:#fbfcfd;border:1px solid var(--line);border-radius:8px"></svg>
+<table id="safTab"></table>
+<div class="grid g2">
+<div class="note"><b>Anomalie 1: 0,10 schneller als 0,05 (und 26 mm mehr Platz).</b> <code>P.safety</code> verschiebt nicht eine feste Route – es ändert, <i>welche</i> Route die Suche findet. Mehr Rand drückt die Route in die Gangmitte, und die Mitte einer Kurve ist die Linie mit dem <b>größten Radius</b>. Größerer Radius ⇒ höheres Grip-Limit <code>v ≤ √(a·R)</code>. Die Einschränkung hat Tempo gekauft. Kein Naturgesetz – Eigenschaft eines breiten Gangs.</div>
+<div class="note"><b>Anomalie 2: 0,03 schlechter als 0,02 (langsamer <i>und</i> näher).</b> Beide Werte liegen unter der Schwelle, ab der der Rand irgendwo bindet. Die Routen unterscheiden sich fast zufällig (Tie-Breaking in OPEN); 11–15 mm Clearance ist Zufall. <b>Merksatz:</b> Unterhalb eines Werts ist der Rand Rauschen, oberhalb wählt er deine Rennlinie.</div></div>
+
+<h3>4b – Warum scheitert <code>safety = 0</code>?</h3>
+<table><tr><th>safety</th><th class="n">CP1</th><th class="n">CP2</th><th class="n">CP3</th><th class="n">CP4</th></tr>
+<tr><td>0,00</td><td class="n">56,0°</td><td class="n">179,0°</td><td class="n bad">212,0°</td><td class="n bad">Leg 4 scheitert</td></tr>
+<tr><td>0,02</td><td class="n">56,0°</td><td class="n">179,0°</td><td class="n">222,9°</td><td class="n">357,4°</td></tr>
+<tr><td>0,05</td><td class="n">56,0°</td><td class="n">179,5°</td><td class="n">235,5°</td><td class="n">348,0°</td></tr></table>
+<div class="card">Ein Checkpoint gilt als erreicht, sobald das Auto <b>näher als <code>cpTol</code> (0,15 m)</b> ist – in <i>irgendeiner</i> Richtung. Ohne Rand darf die Suche Legs 1–3 enger fahren (kürzer!) und erreicht CP3 mit <b>212°</b>. Von dort mit 5 Vorwärtsbögen (kein Rückwärtsgang) kommt das Auto im Gang nicht mehr zum Start zurück: <span class="bad">„leg 4 failed from (0,33 ; 1,08) heading 212 deg"</span>. Planer fehlerfrei – das Auto steckt wirklich fest. <b>Der Zustand, in dem man ankommt, ist Teil des Problems für das nächste Leg.</b> Lokal optimal kann global unmöglich sein.</div>
+
+<h3>4c – safety wählen (3 Sätze, Beispiel)</h3>
+<div class="exam">Ich nehme <b>0,05 m</b>: Dort ist die Clearance stabil bei ca. 39–42 mm und die Zeit flach; darunter (0,03: 11–15 mm) ist der Rand nur Rauschen. Ich verschenke etwas Zeit gegenüber 0,10 m, weil dessen Vorteil (schneller, 65 mm) ein Zufall der Geometrie ist, der auf anderen Strecken nicht übertragbar ist. Meine Meinung ändert sich, wenn Messungen am echten Auto zeigen, dass die Clearance dort viel kleiner ist als in der Simulation.</div>
+
+<h2>7. Die Abweichung ±1 ↔ ±3 – interaktiv</h2>
+<div class="card">Die Krümmung 1/R wird aus <b>drei Punkten</b> berechnet (Kreis durch A, B, C). Der Repo-Code nimmt die Nachbarn k−1, k, k+1 (je 4 cm entfernt, Basis 8 cm). Die Route besteht aber aus Bögen zu 11,9 cm, die an den Posen <b>Knicke</b> haben. Wer über 8 cm misst, erwischt Knicke und liest R = 0,10 m – <b>enger, als das Auto fahren kann</b> (<code>L / tan 22° = 0,297 m</code>). Ein Messartefakt. Alle Guide-Zahlen ergeben sich bei ±3 (Basis 24 cm ≈ zwei Bögen).<br>
+<label>Messbasis: Nachbarn ±<b id="mL">1</b> Punkte</label><input type="range" id="mm" min="1" max="4" step="1" value="1" oninput="mdraw()">
+<svg id="svgM" viewBox="0 0 3.2 2.0" style="width:100%;max-height:340px;background:#fbfcfd;border:1px solid var(--line);border-radius:8px"></svg>
+<div class="kv" id="kvM"></div><small>Farbe = Soll-Geschwindigkeit (blau langsam, rot schnell). Es ist dieselbe Route.</small></div>
+
+<h2>8. Was du in MATLAB als Erstes prüfst</h2>
+<div class="warn">Führe in <code>LS10_Tuning.m</code> den Abschnitt 0 aus (oder in LS09 Abschnitt 9): <code>1/max(kappa)</code> für die Oval-Route. <b>0,296 m</b> ⇒ dein Code entspricht dem Guide, alle Zahlen oben (Spalte „Guide") sollten stimmen. <b>0,104 m</b> ⇒ Repo-Variante; dann gelten die Zahlen der Spalte „Repo", und im Gespräch lohnt der Satz: <i>„Die Krümmung aus drei benachbarten Punkten hängt von der Messbasis ab; bei 4 cm Abstand liest man Knicke statt Kurven – ein physikalisch unmöglicher Radius von 0,10 m verrät das."</i></div>
+
+<h2>9. Prüfungsfragen</h2>
+<details class="exam"><summary>Nenne die fünf Stufen von der Pose zur Rundenzeit.</summary>Plan (<code>cc_lap_plan</code>) → Resample (4 cm) → Tempoprofil (Krümmung → Grip-Limit → Bremsdurchlauf rückwärts → Beschleunigungsdurchlauf vorwärts) → Regler (Pure Pursuit + P-Gas) → Simulator.</details>
+<details class="exam"><summary>Warum kann man eine Runde nicht als eine Suche planen?</summary>Start = Ziel ⇒ A* gibt die Route der Länge 0 zurück. Darum Kette von Suchen durch Checkpoints.</details>
+<details class="exam"><summary>Warum 6,40 m Kosten, aber 6,05 m Strecke?</summary>Lenkzuschläge: <code>cost = arc + 0,02·|Stufe|</code>. Tie-Breaker für weniger Zickzack.</details>
+<details class="exam"><summary>Welche zwei Grenzen begrenzen das Tempo, und wo steckt jede?</summary>Grip: <code>sqrt(AyMax/kappa)</code> in <code>cc_speed_profile</code> (2,46 von 3,72 m/s). Regler: <code>kv·(vSoll−v)</code> in <code>cc_pure_pursuit</code> (nur 1,69 m/s erreicht).</details>
+<details class="exam"><summary>Was garantiert die Suche, was nicht?</summary>Form frei von Wänden und mit der Lenkung fahrbar – nichts über Tempo (v hat sich aus dθ/ds gekürzt).</details>
+<details class="exam"><summary>Warum ist mehr Rand nicht automatisch langsamer?</summary>Er ändert die Route: näher an der Gangmitte = größerer Kurvenradius = höheres Grip-Limit. Und unterhalb einer Schwelle bindet der Rand nirgends – dann ist das Ergebnis Rauschen.</details>
+<details class="exam"><summary>Warum scheitert safety = 0 (obwohl mehr freier Platz)?</summary>Ankunftsrichtung an CP3 = 212° statt 223–236°: Von dort kommt das Auto ohne Rückwärtsgang nicht zurück. Checkpoints legen Orte fest, keine Posen.</details>
+</main><script>
+function tog(id,labels,cb,init){var el=document.getElementById(id);el.className='tog';el.innerHTML='';labels.forEach(function(l,i){var b=document.createElement('button');b.textContent=l;b.onclick=function(){[].forEach.call(el.children,function(c){c.className=''});b.className='on';cb(i)};el.appendChild(b)});el.children[init||0].className='on';cb(init||0)}
+function fmt(x,d){return (+x).toFixed(d).replace('.',',')}
+
+var D={"oval":{"xy":[[1.6,0.5],[1.64,0.5],[1.68,0.5],[1.72,0.5],[1.76,0.5],[1.8,0.5],[1.84,0.5],[1.88,0.5],[1.92,0.5],[1.96,0.5],[2.0,0.5],[2.04,0.5],[2.08,0.5],[2.12,0.5],[2.16,0.5],[2.2,0.502],[2.237,0.517],[2.273,0.533],[2.31,0.548],[2.347,0.563],[2.384,0.579],[2.421,0.594],[2.458,0.609],[2.495,0.625],[2.532,0.64],[2.569,0.655],[2.606,0.671],[2.641,0.689],[2.669,0.717],[2.697,0.746],[2.724,0.776],[2.746,0.809],[2.768,0.842],[2.791,0.875],[2.813,0.908],[2.836,0.941],[2.856,0.976],[2.871,1.013],[2.887,1.05],[2.897,1.088],[2.897,1.128],[2.897,1.168],[2.891,1.206],[2.876,1.243],[2.861,1.28],[2.84,1.314],[2.812,1.342],[2.784,1.37],[2.751,1.392],[2.714,1.408],[2.677,1.423],[2.641,1.439],[2.604,1.455],[2.567,1.47],[2.528,1.477],[2.488,1.477],[2.448,1.478],[2.408,1.478],[2.368,1.478],[2.328,1.479],[2.288,1.479],[2.248,1.479],[2.208,1.48],[2.168,1.48],[2.128,1.48],[2.088,1.481],[2.048,1.481],[2.008,1.482],[1.968,1.482],[1.928,1.482],[1.888,1.483],[1.848,1.483],[1.808,1.483],[1.768,1.484],[1.728,1.484],[1.688,1.484],[1.648,1.485],[1.608,1.485],[1.568,1.485],[1.528,1.486],[1.488,1.486],[1.448,1.486],[1.408,1.487],[1.368,1.487],[1.328,1.488],[1.288,1.488],[1.248,1.488],[1.208,1.489],[1.168,1.489],[1.128,1.489],[1.088,1.49],[1.048,1.49],[1.008,1.49],[0.971,1.477],[0.934,1.462],[0.897,1.446],[0.86,1.431],[0.823,1.417],[0.786,1.402],[0.749,1.387],[0.712,1.372],[0.674,1.357],[0.637,1.342],[0.6,1.327],[0.563,1.311],[0.535,1.283],[0.507,1.255],[0.479,1.227],[0.456,1.194],[0.433,1.161],[0.411,1.128],[0.388,1.095],[0.365,1.062],[0.344,1.028],[0.336,0.989],[0.328,0.95],[0.322,0.91],[0.33,0.871],[0.337,0.832],[0.348,0.794],[0.37,0.76],[0.391,0.727],[0.416,0.696],[0.449,0.674],[0.482,0.651],[0.517,0.633],[0.556,0.624],[0.595,0.616],[0.635,0.611],[0.675,0.61],[0.715,0.609],[0.755,0.609],[0.795,0.608],[0.835,0.607],[0.875,0.606],[0.915,0.606],[0.955,0.605],[0.995,0.604],[1.035,0.604],[1.075,0.603],[1.115,0.602],[1.155,0.602],[1.195,0.601],[1.235,0.6],[1.275,0.599],[1.315,0.599],[1.355,0.598],[1.395,0.597],[1.435,0.597],[1.474,0.592],[1.513,0.584],[1.552,0.575],[1.57,0.571]],"poses":[[1.6,0.5],[1.719,0.5],[1.838,0.5],[1.957,0.5],[2.076,0.5],[2.195,0.5],[2.304,0.546],[2.414,0.591],[2.524,0.637],[2.634,0.682],[2.717,0.766],[2.784,0.865],[2.85,0.963],[2.897,1.073],[2.897,1.191],[2.853,1.301],[2.77,1.385],[2.661,1.431],[2.551,1.477],[2.433,1.478],[2.314,1.479],[2.195,1.48],[2.076,1.481],[1.957,1.482],[1.838,1.483],[1.719,1.484],[1.6,1.485],[1.481,1.486],[1.362,1.487],[1.243,1.488],[1.124,1.489],[1.005,1.49],[0.895,1.446],[0.785,1.401],[0.675,1.357],[0.564,1.312],[0.48,1.229],[0.413,1.131],[0.345,1.033],[0.321,0.917],[0.343,0.801],[0.408,0.702],[0.505,0.635],[0.621,0.611],[0.74,0.609],[0.859,0.607],[0.978,0.605],[1.097,0.603],[1.216,0.6],[1.335,0.598],[1.454,0.596],[1.57,0.571]],"W":3.2,"H":2.0,"cps":[[2.9,1.0],[1.6,1.5],[0.3,1.0]],"start":[1.6,0.5],"m":{"1":{"v":[1.98,1.92,1.87,1.82,1.76,1.7,1.64,1.58,1.52,1.45,1.38,1.31,1.23,1.14,1.05,0.95,1.03,1.11,1.18,1.24,1.31,1.37,1.42,1.36,1.28,1.2,1.11,1.02,1.1,1.17,1.23,1.3,1.36,1.41,1.47,1.43,1.36,1.28,1.2,1.12,1.19,1.24,1.16,1.23,1.28,1.21,1.27,1.26,1.26,1.32,1.38,1.34,1.26,1.18,1.24,1.31,1.37,1.42,1.48,1.53,1.58,1.63,1.68,1.73,1.77,1.82,1.86,1.9,1.95,1.99,2.03,2.07,2.1,2.14,2.11,2.07,2.02,1.97,1.92,1.86,1.81,1.75,1.7,1.63,1.57,1.51,1.44,1.37,1.29,1.21,1.13,1.04,0.93,1.02,1.09,1.16,1.23,1.29,1.35,1.35,1.27,1.19,1.1,1.01,0.9,0.99,1.07,1.14,1.21,1.27,1.23,1.14,1.05,0.95,1.03,1.07,0.98,1.06,1.1,1.0,1.08,1.12,1.03,1.11,1.15,1.06,1.13,1.2,1.27,1.33,1.39,1.44,1.5,1.55,1.6,1.65,1.7,1.74,1.79,1.83,1.88,1.92,1.96,2.0,1.98,1.93,1.88,1.83,1.77,1.82,1.86,1.9,1.92],"k":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.22,8.67,0.0,0.01,0.06,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.39,7.54,0.0,1.36,3.4,0.0,0.01,0.02,0.0,1.64,3.19,0.0,3.66,6.28,0.0,4.07,5.82,0.0,4.5,5.4,0.0,4.93,4.97,0.0,0.04,0.03,0.0,5.65,4.32,0.0,0.05,0.03,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,8.99,0.89,0.0,0.07,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.26,9.58,0.0,0.33,4.41,0.0,0.0,0.02,0.0,1.21,8.68,0.0,1.62,8.21,0.0,2.05,7.8,0.0,2.47,7.39,0.0,2.9,6.97,0.0,1.61,3.15,0.0,0.01,0.02,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.5,2.33,0.0,0.0,0.0],"lap":5.48,"rmin":0.104,"vmin":0.9,"vmax":2.14},"2":{"v":[2.17,2.12,2.07,2.02,1.97,1.92,1.87,1.82,1.76,1.7,1.64,1.58,1.51,1.45,1.38,1.3,1.36,1.42,1.48,1.53,1.58,1.63,1.67,1.61,1.55,1.48,1.41,1.34,1.4,1.46,1.51,1.56,1.61,1.66,1.71,1.65,1.59,1.53,1.46,1.39,1.45,1.48,1.42,1.47,1.48,1.43,1.49,1.46,1.45,1.51,1.56,1.55,1.49,1.42,1.47,1.53,1.58,1.63,1.68,1.72,1.77,1.81,1.86,1.9,1.94,1.98,2.02,2.06,2.1,2.14,2.18,2.21,2.25,2.28,2.3,2.25,2.21,2.16,2.11,2.07,2.02,1.97,1.92,1.86,1.81,1.75,1.69,1.63,1.57,1.51,1.44,1.37,1.29,1.35,1.41,1.47,1.52,1.57,1.62,1.62,1.55,1.49,1.42,1.35,1.27,1.33,1.39,1.45,1.5,1.55,1.51,1.45,1.38,1.3,1.36,1.39,1.32,1.38,1.41,1.34,1.39,1.42,1.35,1.41,1.44,1.37,1.42,1.48,1.53,1.58,1.63,1.68,1.73,1.77,1.82,1.86,1.91,1.95,1.99,2.03,2.07,2.1,2.14,2.18,2.22,2.21,2.16,2.12,2.07,2.09,2.13,2.17,2.19],"k":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.3,2.81,4.63,2.18,0.02,0.03,0.02,0.0,0.0,0.0,0.0,0.0,0.59,3.1,4.35,2.22,1.53,2.04,0.85,0.01,0.01,0.4,1.62,2.0,1.71,3.41,4.04,2.58,3.49,3.92,2.57,3.6,3.82,2.57,3.7,3.71,1.22,0.03,0.03,1.39,3.9,3.57,1.06,0.03,0.03,0.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,2.26,4.71,2.72,0.2,0.04,0.02,0.0,0.0,0.0,0.0,0.0,0.06,2.56,4.85,2.51,1.27,2.29,1.11,0.01,0.01,0.3,2.8,4.63,2.59,2.89,4.5,2.57,3.0,4.4,2.57,3.1,4.3,2.57,3.21,4.2,2.14,1.59,1.97,0.78,0.01,0.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.62,1.83,1.79,0.67,0.67,0.67],"lap":4.8,"rmin":0.206,"vmin":1.27,"vmax":2.3},"3":{"v":[2.34,2.3,2.26,2.21,2.17,2.12,2.07,2.02,1.97,1.92,1.87,1.81,1.76,1.7,1.64,1.58,1.63,1.68,1.72,1.77,1.81,1.86,1.86,1.81,1.75,1.69,1.63,1.57,1.62,1.67,1.72,1.76,1.81,1.85,1.83,1.77,1.72,1.66,1.6,1.53,1.53,1.53,1.54,1.53,1.53,1.53,1.53,1.53,1.58,1.63,1.68,1.73,1.73,1.67,1.71,1.76,1.8,1.85,1.89,1.93,1.97,2.01,2.05,2.09,2.13,2.16,2.2,2.24,2.27,2.31,2.34,2.38,2.41,2.44,2.46,2.42,2.38,2.34,2.29,2.25,2.21,2.16,2.11,2.07,2.02,1.97,1.91,1.86,1.81,1.75,1.69,1.63,1.57,1.62,1.67,1.72,1.76,1.81,1.85,1.84,1.79,1.73,1.67,1.61,1.55,1.6,1.65,1.69,1.74,1.78,1.72,1.66,1.6,1.53,1.52,1.53,1.54,1.53,1.53,1.54,1.53,1.53,1.54,1.53,1.53,1.58,1.63,1.68,1.73,1.77,1.82,1.86,1.9,1.95,1.99,2.03,2.06,2.1,2.14,2.18,2.21,2.25,2.29,2.32,2.35,2.39,2.42,2.4,2.36,2.31,2.31,2.31,2.31],"k":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.13,1.24,2.35,3.15,2.07,0.94,0.02,0.02,0.01,0.0,0.0,0.0,0.26,1.37,2.48,3.18,2.63,2.04,1.43,0.9,0.37,0.17,0.71,1.25,1.83,2.41,2.97,3.34,3.37,3.34,3.33,3.36,3.34,3.33,3.36,3.33,2.74,1.64,0.52,0.6,1.72,2.82,2.68,1.58,0.45,0.02,0.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,2.12,3.18,2.31,1.19,0.07,0.02,0.01,0.0,0.0,0.0,0.03,1.13,2.25,3.29,2.76,2.17,1.54,1.02,0.49,0.13,1.24,2.35,3.33,3.38,3.36,3.31,3.36,3.35,3.31,3.36,3.35,3.32,3.36,3.34,3.13,2.59,2.01,1.4,0.87,0.34,0.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.28,0.81,1.35,1.46,1.46,1.46,1.46],"lap":4.4,"rmin":0.296,"vmin":1.52,"vmax":2.46},"4":{"v":[2.51,2.47,2.43,2.39,2.34,2.3,2.26,2.21,2.17,2.12,2.07,2.02,1.97,1.92,1.87,1.82,1.86,1.9,1.94,1.98,2.02,2.03,1.98,1.93,1.87,1.82,1.76,1.71,1.75,1.8,1.84,1.88,1.93,1.89,1.83,1.78,1.72,1.66,1.6,1.54,1.58,1.52,1.5,1.55,1.51,1.5,1.56,1.59,1.64,1.69,1.73,1.78,1.82,1.87,1.91,1.95,1.99,2.03,2.07,2.11,2.15,2.18,2.22,2.25,2.29,2.32,2.36,2.39,2.43,2.46,2.49,2.52,2.55,2.59,2.62,2.58,2.54,2.5,2.46,2.42,2.38,2.34,2.3,2.25,2.21,2.16,2.11,2.07,2.02,1.97,1.92,1.86,1.81,1.85,1.89,1.94,1.98,2.02,2.01,1.96,1.91,1.86,1.8,1.75,1.69,1.73,1.78,1.82,1.87,1.82,1.77,1.71,1.65,1.59,1.58,1.53,1.47,1.52,1.54,1.47,1.53,1.54,1.48,1.53,1.56,1.58,1.63,1.68,1.73,1.77,1.82,1.86,1.9,1.95,1.99,2.03,2.07,2.1,2.14,2.18,2.22,2.25,2.29,2.32,2.36,2.39,2.42,2.45,2.49,2.52,2.55,2.58,2.6],"k":[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.08,0.69,1.33,1.94,2.38,1.78,1.15,0.52,0.01,0.01,0.0,0.0,0.15,0.77,1.4,2.1,2.7,2.4,2.07,1.57,0.8,0.61,0.61,0.7,1.23,1.95,2.28,2.84,3.31,3.13,3.4,3.5,3.13,3.42,3.47,3.13,3.1,2.48,1.54,1.26,1.27,1.59,2.2,2.12,1.51,0.87,0.25,0.01,0.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.56,1.19,1.81,2.4,1.91,1.29,0.66,0.04,0.01,0.0,0.0,0.02,0.63,1.26,1.9,2.76,2.47,2.14,1.77,0.87,0.64,0.97,1.32,2.04,3.1,3.14,3.26,3.64,3.12,3.28,3.61,3.12,3.3,3.59,3.13,3.22,3.13,2.37,2.05,1.52,0.79,0.49,0.19,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.16,0.46,0.76,1.11,1.11,1.11,1.11,1.11],"lap":4.2,"rmin":0.275,"vmin":1.47,"vmax":2.62}}}};
+var O=D.oval,LEG=[12,25,38,51],cols=['#0f766e','#2563eb','#b45309','#7c3aed'];
+var legSel=-1;
+function legDraw(){var s='<rect x="0" y="0" width="3.2" height="2" fill="none" stroke="#cbd5e1" stroke-width="0.01"/>';
+ for(var l=0;l<4;l++){var a=l==0?0:LEG[l-1],b=LEG[l];var pts=O.poses.slice(a,b+1).map(function(p){return p[0]+','+(2-p[1])}).join(' ');
+  s+='<polyline points="'+pts+'" fill="none" stroke="'+cols[l]+'" stroke-width="'+(legSel==-1||legSel==l?0.035:0.01)+'" stroke-opacity="'+(legSel==-1||legSel==l?1:0.35)+'" stroke-linecap="round"/>'}
+ O.cps.forEach(function(c,i){s+='<circle cx="'+c[0]+'" cy="'+(2-c[1])+'" r="0.05" fill="#fff" stroke="#111" stroke-width="0.012"/><text x="'+(c[0]+0.07)+'" y="'+(2-c[1]-0.07)+'" font-size="0.11">CP'+(i+1)+'</text>'});
+ s+='<circle cx="'+O.start[0]+'" cy="'+(2-O.start[1])+'" r="0.05" fill="#111"/><text x="'+(O.start[0]+0.07)+'" y="'+(2-O.start[1]+0.14)+'" font-size="0.11">Start</text>';
+ document.getElementById('svgL').innerHTML=s}
+tog('legT',['alle Legs','Leg 1','Leg 2','Leg 3','Leg 4'],function(i){legSel=i-1;legDraw();var rows=document.querySelectorAll('#legTab tr');for(var r=1;r<rows.length;r++)rows[r].className=(legSel==-1||legSel==r-1)?'':'';if(legSel>=0)rows[legSel+1].className='hl'},0);
+function rcalc(){var r=+document.getElementById('rr').value;document.getElementById('rL').textContent=fmt(r,3);var v=Math.sqrt(7.85*r);
+ document.getElementById('kvR').innerHTML='<div><small>Grip-Limit √(7,85·R)</small><span class="big">'+fmt(v,2)+' m/s</span></div><div><small>Querbeschleunigung bei 3,72 m/s</small><span class="big">'+fmt(3.72*3.72/r,1)+' m/s²</span></div>'+(r<0.297?'<div style="grid-column:1/-1;color:var(--bad)">Enger als 0,297 m kann das Auto gar nicht fahren.</div>':'')}
+function kvcalc(){var kv=+document.getElementById('kv').value;document.getElementById('kvL').textContent=kv;
+ var v=1,dt=0.04,m=1.0,pts=[],tmax=3,vs=[];var k=kv/100*3.0; // grob: Gas-Prozent*Faktor -> Beschleunigung (Spielzeug)
+ for(var t=0;t<=tmax;t+=dt){var a=Math.min(2.5,k*(2-v));if(Math.abs(kv*(2-v))<27.75)a=0;v+=a*dt;vs.push([t,v])}
+ var s='<line x1="0" y1="'+(110-2*50)+'" x2="300" y2="'+(110-2*50)+'" stroke="#b91c1c" stroke-dasharray="4"/><text x="4" y="'+(110-2*50-4)+'" font-size="9" fill="#b91c1c">Soll 2,0</text>';
+ s+='<polyline fill="none" stroke="#0f766e" stroke-width="2" points="'+vs.map(function(p){return (p[0]/tmax*300).toFixed(1)+','+(110-p[1]*50).toFixed(1)}).join(' ')+'"/>';
+ document.getElementById('svgK').innerHTML=s;var last=vs[vs.length-1][1];
+ document.getElementById('kvT').innerHTML='Nach 3 s: '+fmt(last,2)+' m/s. <b>Spielzeugmodell</b> (nicht der echte Simulator): zeigt nur, dass ein P-Regler dem Soll mit Verzögerung nachläuft und mit kleinem Fehler (unter der Totzone 27,75 %) kein Gas mehr gibt. Kleines kv ⇒ er kommt nicht hin.'}
+var SAF={g:[['0,00','keine Route','',''],['0,02',4.28,25.7,178],['0,03',4.40,11.3,167],['0,04',4.40,39.4,194],['0,05',4.40,39.4,185],['0,07',4.52,44.1,143],['0,08',4.40,50.6,161],['0,10',4.32,65.2,160],['0,12',4.36,80.8,131]],
+ r:[['0,00','keine Route','',''],['0,02',5.36,25.0,178],['0,03',5.44,14.9,167],['0,04',5.48,41.6,194],['0,05',5.48,41.6,185],['0,07',5.64,45.7,143],['0,08',5.64,52.8,161],['0,10',5.52,68.5,160],['0,12',5.36,84.2,131]]};
+function safDraw(i){var d=i==0?SAF.g:SAF.r,t='<tr><th>P.safety</th><th class="n">Zeit</th><th class="n">Clearance</th><th class="n">Expansionen</th></tr>';
+ d.forEach(function(r){t+='<tr'+((r[0]=='0,03'||r[0]=='0,10')?' class="hl"':'')+'><td>'+r[0]+' m</td><td class="n">'+(typeof r[1]=='number'?fmt(r[1],2)+' s':'<span class="bad">'+r[1]+'</span>')+'</td><td class="n">'+(r[2]!==''?fmt(r[2],1)+' mm':'')+'</td><td class="n">'+r[3]+'</td></tr>'});document.getElementById('safTab').innerHTML=t;
+ var s='';var x0=40,w=56,vs=d.filter(function(r){return typeof r[1]=='number'}),tmin=i==0?4.1:5.2,tmax=i==0?4.6:5.7;
+ d.forEach(function(r,j){var x=x0+j*56;s+='<text x="'+(x+10)+'" y="238" font-size="11">'+r[0].replace(',','.')+'</text>';if(typeof r[1]!='number'){s+='<text x="'+x+'" y="120" font-size="10" fill="#b91c1c">keine</text><text x="'+x+'" y="132" font-size="10" fill="#b91c1c">Route</text>';return}
+  var h=r[2]*1.6;s+='<rect x="'+x+'" y="'+(215-h)+'" width="22" height="'+h+'" fill="#0f766e" opacity="0.8"/><text x="'+x+'" y="'+(212-h)+'" font-size="9">'+fmt(r[2],0)+'</text>';
+  var yy=215-(r[1]-tmin)/(tmax-tmin)*190;s+='<circle cx="'+(x+34)+'" cy="'+yy+'" r="5" fill="#b45309"/><text x="'+(x+27)+'" y="'+(yy-8)+'" font-size="9" fill="#b45309">'+fmt(r[1],2)+'</text>'});
+ s+='<text x="4" y="14" font-size="11" fill="#0f766e">■ Clearance (mm)</text><text x="130" y="14" font-size="11" fill="#b45309">● Zeit (s)</text>';
+ document.getElementById('svgS').innerHTML=s}
+tog('safT',['Guide (±3)','Repo (±1)'],safDraw,0);
+function mdraw(){var m=+document.getElementById('mm').value;document.getElementById('mL').textContent=m;var d=O.m[m],s='';var vmin=d.vmin,vmax=d.vmax;
+ for(var i=0;i<O.xy.length-1;i++){var f=(d.v[i]-vmin)/(vmax-vmin+1e-9),c='hsl('+(220-220*f)+',80%,45%)';s+='<line x1="'+O.xy[i][0]+'" y1="'+(2-O.xy[i][1])+'" x2="'+O.xy[i+1][0]+'" y2="'+(2-O.xy[i+1][1])+'" stroke="'+c+'" stroke-width="0.04" stroke-linecap="round"/>'}
+ document.getElementById('svgM').innerHTML=s;
+ document.getElementById('kvM').innerHTML='<div><small>kleinster Radius</small><span class="big '+(d.rmin<0.297?'bad':'')+'">'+fmt(d.rmin,3)+' m</span></div><div><small>physikalisches Minimum</small><span class="big">0,297 m</span></div><div><small>Soll-Tempo min / max</small><span class="big">'+fmt(d.vmin,2)+' / '+fmt(d.vmax,2)+'</span></div><div><small>Rundenzeit (Simulator)</small><span class="big">'+fmt(d.lap,2)+' s</span></div>'}
+legDraw();rcalc();kvcalc();mdraw();
+</script></body></html>

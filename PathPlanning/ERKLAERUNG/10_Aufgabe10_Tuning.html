@@ -1,0 +1,181 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aufgabe 10 – Echte Strecke und Tuning</title><style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mut:#5b6675;--acc:#0f766e;--acc2:#b45309;--bad:#b91c1c;--ok:#15803d;--line:#dde2e8;--soft:#eef6f5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#0b3b38;color:#fff;padding:28px 20px}header .w,main{max-width:960px;margin:0 auto}
+header h1{margin:0 0 6px;font-size:1.7rem}header p{margin:0;opacity:.85}
+main{padding:20px}
+h2{margin:34px 0 10px;font-size:1.35rem;border-left:5px solid var(--acc);padding-left:10px}
+h3{margin:18px 0 6px;font-size:1.05rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.note{background:var(--soft);border-left:4px solid var(--acc);padding:10px 14px;border-radius:6px;margin:12px 0}
+.warn{background:#fff7ed;border-left:4px solid var(--acc2);padding:10px 14px;border-radius:6px;margin:12px 0}
+.exam{background:#eef2ff;border-left:4px solid #4f46e5;padding:10px 14px;border-radius:6px;margin:12px 0}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:.93rem}th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}th{background:#f0f3f6}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.hl{background:#fef3c7}.bad{color:var(--bad);font-weight:600}.ok{color:var(--ok);font-weight:600}
+code{background:#eef1f4;padding:1px 5px;border-radius:4px;font-size:.9em}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:1fr 1fr}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.tog{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0}
+.tog button{border:0;background:#fff;padding:7px 14px;cursor:pointer;font:inherit}.tog button.on{background:var(--acc);color:#fff}
+input[type=range]{width:100%}label{font-size:.92rem;color:var(--mut)}
+.big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:8px 0}
+.kv div{background:#f3f6f8;border-radius:8px;padding:8px 10px}.kv small{display:block;color:var(--mut)}
+details{margin:8px 0}summary{cursor:pointer;font-weight:600}
+svg text{font-family:inherit}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;background:#e2e8f0;font-size:.8rem}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}.flow div{flex:1;min-width:120px;background:#f3f6f8;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.88rem}.flow b{display:block;color:var(--acc)}
+select{font:inherit;padding:3px 6px}
+</style></head><body><header><div class="w"><h1>Aufgabe 10 – Echte Strecke und Tuning</h1><p>Warum die Suche teuer ist, was die acht Werte tun, und wie die Ausgabe zustande kommt</p></div></header><main>
+<div class="warn"><b>Ehrlich vorweg:</b> Ich konnte MATLAB hier nicht starten. Alle Zahlen stammen aus einer Nachrechnung des Labors. Mit der Messbasis <b>±3</b> für die Krümmung reproduziert sie jede Tabelle des Guides auf die Nachkommastelle („Guide"). Der Repo-Code misst über <b>±1</b> („Repo") und liefert andere Zeiten und Reserven. Prüfe in <code>LS10_Tuning.m</code> Abschnitt 0 mit einer Zahl, welche Variante dein MATLAB hat (R = 0,296 m ⇒ Guide, R = 0,104 m ⇒ Repo). Die Planung (Legs, Expansionen, Heuristik) ist in beiden Varianten identisch.</div>
+
+<h2>1. Worum geht's</h2>
+<div class="card">Jetzt fährt das Auto die <b>echte Strecke</b> (20 m statt 6 m) – und wir stellen <b>acht Werte</b> so ein, dass drei Zahlen gleichzeitig passen:
+<div class="kv"><div><small>Rundenzeit</small><b>klein</b> ist gut</div><div><small>Clearance (Platz im <i>Raum</i>)</small><b>groß</b> ist gut</div><div><small>Grip-Reserve (Platz im <i>Grip</i>)</small><b>klein</b> ist gut</div></div>
+<table><tr><th>Wert</th><th>Standard</th><th>bestimmt…</th></tr>
+<tr><td><code>safety</code></td><td>0,05 m</td><td>Abstand des Planers zur Wand</td></tr>
+<tr><td><code>ayPlan</code></td><td>1,00</td><td>mit wie viel Grip das Tempoprofil rechnet</td></tr>
+<tr><td><code>ABrake</code> / <code>AAccel</code></td><td>2,5 / 2,0 m/s²</td><td>wie hart das Profil bremsen/beschleunigen darf</td></tr>
+<tr><td><code>Ld0</code>, <code>kLd</code>, <code>LdMax</code></td><td>0,16 m, 0,08 s, 0,35 m</td><td>Vorausschau des Reglers: Ld = Ld0 + kLd·v, gedeckelt</td></tr>
+<tr><td><code>kv</code></td><td>90</td><td>Gas pro m/s Tempofehler</td></tr></table></div>
+
+<h2>2. Was ich gemacht habe</h2>
+<div class="card"><ul>
+<li>Live Script <code>LS10_Tuning.m</code>: alle Schritte 1–6 mit den echten Befehlen (<code>experiment_cc_lap</code>, <code>cc_scorecard</code>, Messschleifen) und Erklärung dabei.</li>
+<li>Die ganze Lab-Pipeline nachgebaut und gegen alle Guide-Tabellen geprüft; damit <b>die Werte für Schritt 6 gesucht</b>: ca. 480 Zufallskombinationen mit <code>Reserve=false</code> vorsortiert, dann die besten Kandidaten mit Reserve und auf dem Oval geprüft.</li>
+<li>Nur im <code>cfg</code>-Block eingetragen (wie verlangt) – an <code>tools/</code> nichts verändert.</li>
+</ul></div>
+
+<h2>3. Schritt 1 – Eine Runde auf der echten Strecke</h2>
+<div class="tog" id="legT"></div>
+<svg id="svgL" viewBox="0 0 6.54 2.94" style="width:100%;max-height:340px;background:#fbfcfd;border:1px solid var(--line);border-radius:8px"></svg>
+<table id="legTab"><tr><th>Leg</th><th>Ziel</th><th class="n">Posen</th><th class="n">Kosten</th><th class="n">Expansionen</th><th class="n">Ankunft</th></tr>
+<tr><td>1</td><td>(6,18 ; 1,65)</td><td class="n">30</td><td class="n">3,53 m</td><td class="n">453</td><td class="n">+90,0°</td></tr>
+<tr><td>2</td><td>(4,35 ; 2,55)</td><td class="n">21</td><td class="n">2,46 m</td><td class="n">84</td><td class="n">+179,5°</td></tr>
+<tr class="hl"><td>3</td><td>(3,00 ; 1,15)</td><td class="n">46</td><td class="n">5,69 m</td><td class="n"><b>1955</b></td><td class="n">+179,0°</td></tr>
+<tr><td>4</td><td>(0,50 ; 2,45)</td><td class="n">29</td><td class="n">3,47 m</td><td class="n">935</td><td class="n">+179,5°</td></tr>
+<tr><td>5</td><td>(0,45 ; 1,35)</td><td class="n">11</td><td class="n">1,29 m</td><td class="n">46</td><td class="n">+291,5°</td></tr>
+<tr><td>6</td><td>(3,50 ; 0,60)</td><td class="n">31</td><td class="n">3,65 m</td><td class="n">184</td><td class="n">+21,5°</td></tr></table>
+<div class="card"><code>LAP: 163 poses, 20.10 m, 3657 expansions. Closes: yes (95 mm, 21 deg)</code> · Guide: <b>12,20 s</b>, Topspeed 2,02 m/s · Repo: <b>15,08 s</b>, Topspeed 1,95 m/s.<br><br>
+<b>Warum kostet Leg 3 mehr als die Hälfte der Suche (1955 von 3657)?</b> Die Luftlinie von CP2 nach CP3 (gestrichelt in der Karte) ist nur 1,97 m lang und führt <b>durch die Wand</b>. Das Auto muss herum: 5,69 m. Die Heuristik <code>h</code> = Luftlinie weiß nichts von Wänden:</div>
+<div id="heur"></div>
+<div class="note">Fünf Legs haben Sichtlinie, dort liegt <code>h</code> nur 12–23 % unter den wahren Kosten. Leg 3: Faktor <b>2,89</b> – und zwar <i>in der ganzen Region</i>. A* nimmt immer den Knoten mit dem kleinsten <code>f = g + h</code>. Ist <code>h</code> überall zu klein, wirken alle Knoten billig und die Suche <b>breitet sich flächig aus</b>, statt die Region zu durchqueren: sie wird dort zu Dijkstra. Die Heuristik bleibt <b>zulässig</b> (überschätzt nie) ⇒ die Route bleibt die billigste – nur die Arbeit ist verschwendet. <i>Zulässigkeit kauft Korrektheit, nicht Geschwindigkeit.</i> Dichte: Oval 185 Expansionen / 6,05 m ≈ 31 pro m – hier 3657 / 19,23 m ≈ 190 pro m, sechsmal so viel bei identischem Code.</div>
+
+<h2>4. Schritt 2 – Das Rand-Fenster schließt sich</h2>
+<div class="tog" id="safT"></div>
+<table id="safTab"></table>
+<div class="grid g2">
+<div class="note"><b>Der wandernde Crash (0,03 → 0,04).</b> Der Rand hat nie <i>das</i> Problem gelöst, sondern das gerade schlimmste. Bei 0,03 ist die rechte Umkehrkurve (5,90 ; 0,71) die engste Stelle. Wird der Rand größer, überlebt man sie – und die nächst-engste am anderen Ende (1,65 ; 2,44) kommt dran. 0,05 ist der Wert, bei dem die schlimmste <i>verbleibende</i> Stelle gerade überlebbar ist. ⇒ 0,05 m ist eine <b>Messung dieser Strecke</b>, keine Eigenschaft des Autos.</div>
+<div class="card"><b>Die Zahl, die das Fenster schließt:</b> der engste Gang, <b>0,59 m</b>. Das schräg stehende Auto ragt <code>d(ψ)=11·sinψ+5,25·cosψ</code> cm heraus, maximal 12,2 cm (bei 64,5°).
+<label>Rand s: <b id="sL">0,05</b> m</label><input type="range" id="ss" min="0" max="0.15" step="0.005" value="0.05" oninput="scalc()">
+<div class="kv" id="kvS"></div><small>Der Guide sagt: Bei s = 0,10 m schließen die aufgeblasenen Wände die rechte Umkehrkurve von Leg 1 – keine Posenfolge bleibt („leg 1 failed").</small></div></div>
+<div class="exam"><b>Fast gratis Platz:</b> <code>safety</code> 0,05 → 0,08 bringt Clearance 19 → 38 mm (Guide) für nur +0,12 s – und die Suche wird <b>billiger</b> (3657 → 3138 Expansionen). Das ist der Wert, den der Guide meint: zuerst setzen, den Rest dafür ausgeben.</div>
+
+<h2>5. Schritt 3 – Warum zwei Zahlen nicht reichen</h2>
+<div class="tog" id="varT"></div>
+<div class="card"><label>ayPlan: <b id="apL">1,00</b> (Plan mit dem <i>x</i>-fachen Grip)</label>
+<input type="range" id="ap" min="0" max="5" step="1" value="2" oninput="apdraw()">
+<div class="kv" id="kvAP"></div><svg id="svgR" viewBox="0 0 400 44" style="width:100%"></svg><div id="msgAP" class="note"></div></div>
+<div class="card"><b>Was <code>ayPlan = 1,7</code> verlangt:</b> In <code>vRef = min(VMax, sqrt(AyMax./kappa))</code> wird <code>AyMax = 1,7 · P.ayMax</code>. Das Profil erlaubt √1,7 = <b>1,30-mal</b> höhere Kurventempi, als die Reifen halten – ein Plan für ein Auto mit 70 % mehr Grip. Im Simulator: 30 von 306 Schritten am Grip-Limit (statt 2).<br>
+<b>Was beim Versagen physikalisch passiert:</b> Sinkt der Grip, kann das Auto die geplante Querbeschleunigung nicht aufbringen: es <b>untersteuert</b>, fährt geradeaus weiter als gelenkt und driftet nach außen – und außen in der Kurve ist die Wand.<br>
+<b>Die Reserve:</b> Dieselbe Route, derselbe Regler, aber die Reifen werden schrittweise schwächer (95, 90, … 60 % von <code>ayMax</code>). Reserve = niedrigster Wert, bei dem die Runde noch klappt. Klein ist gut. Ein reales Auto ist immer ein paar Prozent schlechter als sein Modell.</div>
+<div class="warn"><b>Beachte:</b> In der Repo-Variante bleibt die Reserve auch bei ayPlan 1,7 auf 60 % – das ±1-Profil plant wegen der Knick-Artefakte (R = 0,10 m statt 0,30 m) ohnehin überall zu vorsichtig. Den Zielkonflikt des Guides gibt es erst, wenn das Profil „richtig" misst.</div>
+
+<h2>6. Schritt 4 – Ein Wert nach dem anderen</h2>
+<h3>Erst tippen, dann messen (24 Felder)</h3>
+<p>Was passiert, wenn du den Wert <b>erhöhst</b>? <span class="pill">+ besser · − schlechter · 0 egal</span> &nbsp;<button onclick="predCheck()">Prüfen</button></p>
+<table id="pred"></table><div id="predMsg" class="note" style="display:none"></div>
+<h3>Messwerte</h3>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="tog" id="varT2"></span><label>Wert: <select id="knob" onchange="knobDraw()"></select></label></div>
+<table id="knobTab"></table>
+
+<h2>7. Schritt 5 – Zwei Ergebnisse zum Stehenbleiben</h2>
+<div class="grid g2">
+<div class="card"><b>5a – Warum LdMax nichts tut</b><br><code>Ld = min(LdMax, Ld0 + kLd·v)</code><br>
+<label>v: <b id="vL">2.02</b> m/s</label><input type="range" id="vv" min="0" max="3.72" step="0.01" value="2.02" oninput="ldcalc()">
+<div class="kv" id="kvLd"></div>
+Schnellster Punkt 2,02 m/s ⇒ 0,16 + 0,08·2,02 = <b>0,32 m &lt; 0,35 m</b>. Der Deckel wird nie berührt. Bei 0,22 beginnt er zu greifen (nur diese Zeile bewegt sich). Ein Knopf, der nichts tut, ist nicht harmlos: man greift im Fehlerfall danach und verliert eine Stunde.</div>
+<div class="card"><b>5b – Kurzer gegen langer Blick</b><br><code>δ = arctan(2·L·sin α / Ld)</code> (α = Winkel zum Zielpunkt)
+<label>Ld: <b id="ldL">0,16</b> m &nbsp; α = 15°</label><input type="range" id="ld" min="0.06" max="0.40" step="0.01" value="0.16" oninput="ldcalc()">
+<div class="kv" id="kvDel"></div></div></div>
+<div class="note"><b>Warum widersprechen sich die zwei Sicherheitszahlen?</b> Ld steht im <b>Nenner</b>.<br>
+<b>Kurzer Blick (0,08): viel Platz, keine Reserve.</b> Gleiche Abweichung ⇒ <b>größerer Lenkwinkel</b>. Das Auto klebt an der geplanten Linie (die liegt 50 mm von der Wand), korrigiert aber so hart, dass es 7 statt 1 Schritt am Grip-Limit fährt. Fehlen 15 % Grip, schafft es die eigenen Korrekturen nicht mehr: Reserve 90 %.<br>
+<b>Langer Blick (0,22): kein Platz, Grip im Überfluss.</b> Das Auto zielt an der Kurve vorbei und <b>schneidet</b> sie: schneller, aber die gewonnenen 8 mm sind genau die vom Rand des Planers (Clearance 11 mm). Eine geschnittene Kurve hat größeren Radius, verlangt also weniger Grip: 1 Schritt am Limit statt 7.<br>
+<i>Clearance</i> = wie viel vom Planer-Rand der Regler zurückgegeben hat. <i>Reserve</i> = wie nah die Runde an der Reifengrenze ist. Zwei Ausfallarten, keine Einzelzahl ersetzt die andere. Reserve zuerst begrenzen (≳ 85 % = nicht fahrbar), den Rest in Zeit ausgeben.</div>
+
+<h2>8. Schritt 6 – Das Ziel treffen</h2>
+<div class="card"><b>Ziel S</b> (Hardware): Clearance ≥ 35 mm, Reserve ≤ 70 %, Zeit &lt; 11,60 s. &nbsp; <b>Ziel F</b> (schnell): Zeit ≤ 11,00 s, Clearance ≥ 25 mm, Reserve ≤ 70 %. Beide müssen auch das Oval schaffen.</div>
+<div class="tog" id="cfgT"></div>
+<div class="grid g2"><div class="card" id="cfgBox"></div><div class="card" id="cfgRes"></div></div>
+<div class="warn"><b>Wichtig:</b> Die Werte der einen Variante funktionieren in der anderen <b>nicht</b>: Repo-Werte unter ±3: 9,60 s, 19,8 mm, <b>100 %</b> Reserve (Wette verloren). Guide-Werte unter ±1: 13,48 s. Sie sind auf das jeweilige Tempoprofil zugeschnitten. Wenn dein MATLAB leicht andere Zahlen gibt, starte mit meinen Werten und verbessere mit <code>Reserve=false</code>.</div>
+<h3>Zur Abgabe: was habe ich gekauft, was bezahlt? (Guide-Variante vom Standard 12,20 s / 19,2 mm / 65 %)</h3>
+<table><tr><th>Wert</th><th>Änderung</th><th>gekauft</th><th>bezahlt</th><th>Warum</th></tr>
+<tr><td><code>safety</code></td><td>0,05 → 0,08</td><td>+19 mm Clearance (19 → 38)</td><td>0,12 s</td><td>Rand drückt die Route in die Gangmitte (größerer Radius); Suche wird billiger</td></tr>
+<tr><td><code>kv</code></td><td>90 → 140</td><td>≈ 0,7 s (12,20 → 11,48)</td><td>5 Punkte Reserve (65 → 70 %)</td><td>Regler jagt dem Soll-Tempo härter nach, mehr Schritte am Grip-Limit (2 → 5)</td></tr>
+<tr><td><code>ayPlan</code></td><td>1,0 → 1,1</td><td>≈ 0,3 s je 0,1</td><td>Reserve steigt (75 % bei 1,2)</td><td>Plan für mehr Grip als vorhanden – nur wenig anheben</td></tr>
+<tr><td><code>Ld0</code></td><td>0,16 → 0,10</td><td>Reserve (kurzer Blick)</td><td>etwas Clearance</td><td>Gegenpol zu ayPlan; Ld im Nenner von δ</td></tr>
+<tr><td><code>LdMax</code></td><td>nicht geändert</td><td>–</td><td>–</td><td>0,16 + 0,08·2,02 = 0,32 &lt; 0,35: greift nie (5a)</td></tr></table>
+<div class="exam"><b>Ein Satz zum Ziel:</b> Ich habe Ziel S gewählt (F ist damit ebenfalls erfüllt): ein Lauf mit ≥ 35 mm Rand und 30 % Grip-Reserve ist, was man für ein Auto will, das viele Runden unbeaufsichtigt überleben muss; für eine Vorführung vor der Klasse genügt F.</div>
+
+<h2>9. Prüfungsfragen</h2>
+<details class="exam"><summary>Warum kostet Leg 3 so viel?</summary>Die Luftlinie CP2→CP3 geht durch eine Wand (1,97 m), der echte Weg ist 5,69 m. <code>h</code> ist dort 2,89× zu klein ⇒ alle Knoten wirken billig, A* breitet sich flächig aus. Zulässig, aber nicht informativ.</details>
+<details class="exam"><summary>Warum ist das Rand-Fenster hier nur 0,05–0,08 m?</summary>Engster Gang 0,59 m; das schräg stehende Auto ragt bis 0,122 m heraus; bei 0,10 schließen die Wände Leg 1. Unter 0,05 crashen die engsten Stellen. Auf dem Oval ist alles breiter.</details>
+<details class="exam"><summary>Was sind Clearance und Reserve?</summary>Clearance: kleinster Abstand Auto ↔ Wand über die Runde (Platz im Raum). Reserve: niedrigster Reifengrip (in % des Modells), bei dem die Runde noch klappt (Platz im Grip). Klein ist gut.</details>
+<details class="exam"><summary>Warum ist ayPlan = 1,7 gefährlich, obwohl 1,5 s schneller?</summary>Es plant für 70 % mehr Grip. Fehlen 10 % Grip, untersteuert das Auto nach außen in die Wand. Clearance sieht davon nichts.</details>
+<details class="exam"><summary>Warum widersprechen sich bei Ld0 Clearance und Reserve?</summary>Ld im Nenner des Lenkgesetzes: kurz ⇒ hart lenkend, nah an der Linie, viel Grip nötig; lang ⇒ schneidet Kurven, verbraucht den Planer-Rand, braucht weniger Grip.</details>
+<details class="exam"><summary>Warum bleibt LdMax ohne Wirkung?</summary>Die Formel liefert nie mehr als 0,16 + 0,08·2,02 = 0,32 m; der Deckel liegt bei 0,35 m.</details>
+<details class="exam"><summary>Warum muss das Setup auch auf dem Oval laufen?</summary>Sonst ist es eine angepasste Kurve, kein Regler. Der Test ist die Übertragbarkeit.</details>
+</main><script>
+function tog(id,labels,cb,init){var el=document.getElementById(id);el.className='tog';el.innerHTML='';labels.forEach(function(l,i){var b=document.createElement('button');b.textContent=l;b.onclick=function(){[].forEach.call(el.children,function(c){c.className=''});b.className='on';cb(i)};el.appendChild(b)});el.children[init||0].className='on';cb(init||0)}
+function fmt(x,d){return (+x).toFixed(d).replace('.',',')}
+
+var D={"c":{"poses":[[3.5,0.6],[3.619,0.6],[3.738,0.6],[3.857,0.6],[3.976,0.6],[4.095,0.6],[4.214,0.6],[4.333,0.6],[4.452,0.6],[4.571,0.6],[4.69,0.6],[4.809,0.6],[4.928,0.6],[5.047,0.6],[5.166,0.6],[5.285,0.6],[5.404,0.6],[5.523,0.6],[5.642,0.6],[5.761,0.6],[5.88,0.6],[5.989,0.646],[6.073,0.729],[6.117,0.839],[6.117,0.957],[6.117,1.076],[6.117,1.195],[6.117,1.314],[6.117,1.433],[6.117,1.552],[6.094,1.669],[6.072,1.786],[6.049,1.902],[6.026,2.019],[6.003,2.136],[5.981,2.253],[5.936,2.363],[5.853,2.447],[5.744,2.493],[5.626,2.494],[5.507,2.495],[5.388,2.496],[5.269,2.497],[5.15,2.498],[5.031,2.499],[4.912,2.5],[4.793,2.501],[4.674,2.502],[4.555,2.503],[4.436,2.504],[4.317,2.505],[4.198,2.506],[4.079,2.507],[3.96,2.508],[3.843,2.487],[3.732,2.443],[3.648,2.361],[3.601,2.252],[3.599,2.134],[3.643,2.024],[3.725,1.939],[3.808,1.853],[3.916,1.807],[4.034,1.805],[4.153,1.803],[4.272,1.801],[4.389,1.821],[4.507,1.842],[4.624,1.863],[4.741,1.883],[4.856,1.857],[4.953,1.789],[5.051,1.721],[5.148,1.652],[5.211,1.553],[5.231,1.436],[5.205,1.321],[5.137,1.224],[5.037,1.161],[4.921,1.141],[4.804,1.12],[4.686,1.099],[4.567,1.102],[4.449,1.104],[4.33,1.106],[4.211,1.108],[4.092,1.11],[3.973,1.112],[3.854,1.114],[3.735,1.116],[3.616,1.119],[3.497,1.121],[3.378,1.123],[3.259,1.125],[3.14,1.127],[3.021,1.129],[2.902,1.131],[2.783,1.133],[2.664,1.135],[2.548,1.16],[2.45,1.228],[2.367,1.312],[2.302,1.412],[2.236,1.511],[2.214,1.627],[2.191,1.744],[2.168,1.861],[2.124,1.971],[2.079,2.081],[2.035,2.191],[1.99,2.302],[1.907,2.386],[1.798,2.432],[1.688,2.478],[1.57,2.479],[1.451,2.48],[1.332,2.481],[1.213,2.482],[1.094,2.483],[0.975,2.484],[0.856,2.485],[0.737,2.486],[0.618,2.487],[0.509,2.443],[0.424,2.36],[0.379,2.251],[0.332,2.141],[0.307,2.025],[0.305,1.906],[0.303,1.787],[0.347,1.677],[0.391,1.566],[0.434,1.456],[0.478,1.345],[0.521,1.234],[0.565,1.123],[0.609,1.013],[0.652,0.902],[0.696,0.791],[0.739,0.681],[0.822,0.596],[0.93,0.549],[1.049,0.547],[1.168,0.545],[1.287,0.543],[1.406,0.541],[1.525,0.539],[1.643,0.537],[1.762,0.535],[1.881,0.532],[2.0,0.53],[2.119,0.528],[2.238,0.526],[2.357,0.524],[2.476,0.522],[2.595,0.52],[2.714,0.518],[2.833,0.516],[2.952,0.514],[3.071,0.512],[3.19,0.509],[3.309,0.507],[3.419,0.551]],"cps":[[6.18,1.65],[4.35,2.55],[3.0,1.15],[0.5,2.45],[0.45,1.35]],"start":[3.5,0.6],"W":6.54,"H":2.94},"S":{"1":{"ayPlan":[[0.6,16.88,60,22.2,0,423],[0.8,15.88,60,21.1,0,398],[1.0,15.08,60,21.2,0,378],[1.2,14.44,60,20.6,0,362],[1.5,13.64,60,23.3,0,342],[1.7,13.24,60,20.5,3,332]],"Ld0":[[0.08,15.24,65,28.9,0,382],[0.12,15.16,60,25.6,0,380],[0.16,15.08,60,21.2,0,378],[0.22,15.0,60,15.3,0,376],[0.3,14.92,60,8.0,0,374]],"kLd":[[0.0,15.28,60,31.5,0,383],[0.04,15.16,60,26.0,0,380],[0.12,15.0,60,15.5,0,376],[0.18,14.92,60,8.0,0,374]],"LdMax":[[0.22,15.16,60,24.3,0,380],[0.28,15.08,60,21.2,0,378],[0.35,15.08,60,21.2,0,378],[0.5,15.08,60,21.2,0,378],[0.7,15.08,60,21.2,0,378]],"ABrake":[[1.5,15.88,60,20.6,0,398],[2.5,15.08,60,21.2,0,378],[5.0,14.28,60,19.6,1,358]],"AAccel":[[1.0,16.2,60,19.8,0,406],[2.0,15.08,60,21.2,0,378],[6.0,13.84,60,18.3,0,347]],"kv":[[40,16.96,60,19.6,0,425],[90,15.08,60,21.2,0,378],[140,14.36,60,24.1,0,360],[200,14.0,60,21.1,0,351]],"safety":[[0.05,15.08,60,21.2,0,378],[0.06,15.0,60,16.5,0,376],[0.07,14.96,60,19.5,0,375],[0.08,15.28,60,36.4,0,383]]},"3":{"ayPlan":[[0.6,13.92,60,22.3,0,349],[0.8,12.92,60,19.6,0,324],[1.0,12.2,65,19.2,2,306],[1.2,11.64,75,20.8,13,292],[1.5,11.04,90,18.8,20,277],[1.7,10.68,95,18.1,30,268]],"Ld0":[[0.08,12.52,90,29.7,7,314],[0.12,12.24,65,25.6,4,307],[0.16,12.2,65,19.2,2,306],[0.22,12.12,70,11.0,1,304],[0.3,12.12,70,11.0,1,304]],"kLd":[[0.0,null,null,null,"crashed at (4.21, 2.79) after 4.08 s"],[0.04,12.32,65,27.4,4,309],[0.12,12.12,70,10.5,1,304],[0.18,12.12,70,11.0,1,304]],"LdMax":[[0.22,12.32,65,27.4,4,309],[0.28,12.2,65,18.9,2,306],[0.35,12.2,65,19.2,2,306],[0.5,12.2,65,19.2,2,306],[0.7,12.2,65,19.2,2,306]],"ABrake":[[1.5,12.76,60,22.0,0,320],[2.5,12.2,65,19.2,2,306],[5.0,11.72,75,15.8,9,294]],"AAccel":[[1.0,12.92,65,21.9,1,324],[2.0,12.2,65,19.2,2,306],[6.0,11.44,70,15.4,5,287]],"kv":[[40,14.8,60,18.9,0,371],[90,12.2,65,19.2,2,306],[140,11.48,70,21.9,5,288],[200,11.12,70,17.0,4,279]],"safety":[[0.05,12.2,65,19.2,2,306],[0.06,12.16,60,17.0,1,305],[0.07,12.12,60,21.8,1,304],[0.08,12.32,65,38.3,1,309]]}}};
+var C=D.c,LEG=[29,49,94,122,132,162],cols=['#0f766e','#2563eb','#b45309','#7c3aed','#db2777','#4d7c0f'],sel=-1,VAR=0;
+var CP=C.cps,H=C.H;
+function legDraw(){var s='<rect x="0" y="0" width="'+C.W+'" height="'+C.H+'" fill="none" stroke="#cbd5e1" stroke-width="0.01"/>';
+ for(var l=0;l<6;l++){var a=l==0?0:LEG[l-1],b=LEG[l];var pts=C.poses.slice(a,b+1).map(function(p){return p[0]+','+(H-p[1])}).join(' ');var on=sel==-1||sel==l;
+  s+='<polyline points="'+pts+'" fill="none" stroke="'+cols[l]+'" stroke-width="'+(on?0.04:0.01)+'" stroke-opacity="'+(on?1:0.3)+'" stroke-linecap="round"/>'}
+ s+='<line x1="'+CP[1][0]+'" y1="'+(H-CP[1][1])+'" x2="'+CP[2][0]+'" y2="'+(H-CP[2][1])+'" stroke="#b91c1c" stroke-width="0.02" stroke-dasharray="0.06"/><text x="'+((CP[1][0]+CP[2][0])/2+0.06)+'" y="'+(H-(CP[1][1]+CP[2][1])/2)+'" font-size="0.13" fill="#b91c1c">Luftlinie 1,97 m</text>';
+ CP.forEach(function(c,i){s+='<circle cx="'+c[0]+'" cy="'+(H-c[1])+'" r="0.06" fill="#fff" stroke="#111" stroke-width="0.015"/><text x="'+(c[0]+0.08)+'" y="'+(H-c[1]-0.08)+'" font-size="0.14">CP'+(i+1)+'</text>'});
+ s+='<circle cx="'+C.start[0]+'" cy="'+(H-C.start[1])+'" r="0.06" fill="#111"/><text x="'+(C.start[0]+0.08)+'" y="'+(H-C.start[1]+0.2)+'" font-size="0.14">Start</text>';
+ document.getElementById('svgL').innerHTML=s}
+tog('legT',['alle Legs','Leg 1','Leg 2','Leg 3','Leg 4','Leg 5','Leg 6'],function(i){sel=i-1;legDraw()},0);
+var HT=[[1,2.878,3.531,453],[2,2.029,2.460,84],[3,1.974,5.695,1955],[4,2.953,3.472,935],[5,1.150,1.290,46],[6,3.183,3.650,184]];
+(function(){var s='<table><tr><th>Leg</th><th class="n">h(Start)</th><th class="n">wahre Kosten</th><th class="n">Verhältnis</th><th style="width:40%">Balken: Luftlinie (grün) gegen wahre Kosten (grau)</th><th class="n">Exp.</th></tr>';
+ HT.forEach(function(r){var w1=r[1]/6*100,w2=r[2]/6*100;s+='<tr'+(r[0]==3?' class="hl"':'')+'><td>'+r[0]+'</td><td class="n">'+fmt(r[1],3)+'</td><td class="n">'+fmt(r[2],3)+'</td><td class="n"><b>'+fmt(r[2]/r[1],2)+'</b></td><td><div style="background:#cbd5e1;width:'+w2+'%;height:8px"></div><div style="background:#0f766e;width:'+w1+'%;height:8px"></div></td><td class="n">'+r[3]+'</td></tr>'});
+ document.getElementById('heur').innerHTML=s+'</table>'})();
+var SAFE={g:[['0,00','Crash (5,82 ; 0,68) nach 1,64 s','',''],['0,02','Crash (5,83 ; 0,68) nach 1,64 s','',''],['0,03','Crash (5,90 ; 0,71) nach 1,68 s','',''],['0,04','Crash (1,65 ; 2,44) nach 8,24 s','',''],['0,05','12,20 s','19,2 mm','3657'],['0,06','12,16 s','17,0 mm','3577'],['0,07','12,12 s','21,8 mm','3295'],['0,08','12,32 s','38,3 mm','3138'],['0,10','keine Route (leg 1 failed)','','']],
+ r:[['0,00','Crash (5,83 ; 0,68) nach 1,68 s','',''],['0,02','Crash (5,83 ; 0,68) nach 1,68 s','',''],['0,03','Crash (5,88 ; 0,70) nach 1,72 s','',''],['0,04','14,96 s','9,3 mm','3615'],['0,05','15,08 s','21,2 mm','3657'],['0,06','15,00 s','16,5 mm','3577'],['0,07','14,96 s','19,5 mm','3295'],['0,08','15,28 s','36,4 mm','3138'],['0,10','keine Route (leg 1 failed)','','']]};
+tog('safT',['Guide (±3)','Repo (±1)'],function(i){var d=i==0?SAFE.g:SAFE.r,t='<tr><th>P.safety</th><th>Ergebnis</th><th class="n">Clearance</th><th class="n">Expansionen</th></tr>';
+ d.forEach(function(r){var bad=/Crash|keine/.test(r[1]);t+='<tr><td>'+r[0]+' m</td><td class="'+(bad?'bad':'')+'">'+r[1]+'</td><td class="n">'+r[2]+'</td><td class="n">'+r[3]+'</td></tr>'});document.getElementById('safTab').innerHTML=t},0);
+function scalc(){var s=+document.getElementById('ss').value;document.getElementById('sL').textContent=fmt(s,3);var f=0.59-2*s;
+ document.getElementById('kvS').innerHTML='<div><small>Gang 0,59 m − 2·s</small><span class="big">'+fmt(f,3)+' m</span></div><div><small>Auto-Überstand max.</small><span class="big">0,122 m</span></div><div><small>Auto-Breite</small><span class="big">0,105 m</span></div><div><small>übrig nach Breite</small><span class="big '+(f<0.105?'bad':'')+'">'+fmt(f-0.105,3)+' m</span></div>'}
+var NAMES={ayPlan:'ayPlan',Ld0:'Ld0',kLd:'kLd',LdMax:'LdMax',ABrake:'ABrake',AAccel:'AAccel',kv:'kv',safety:'safety'};
+function vname(i){return VAR==0?'3':'1'}
+function apdraw(){var i=+document.getElementById('ap').value,r=D.S[VAR==0?'3':'1'].ayPlan[i];document.getElementById('apL').textContent=fmt(r[0],2);
+ document.getElementById('kvAP').innerHTML='<div><small>Rundenzeit</small><span class="big">'+fmt(r[1],2)+' s</span></div><div><small>Clearance</small><span class="big">'+fmt(r[3],1)+' mm</span></div><div><small>Grip-Reserve</small><span class="big '+(r[2]>=85?'bad':(r[2]<=70?'ok':''))+'">'+r[2]+' %</span></div><div><small>Schritte am Grip-Limit</small><span class="big">'+r[4]+' von '+r[5]+'</span></div>';
+ var rs=[60,65,70,75,80,85,90,95,100],s='';rs.forEach(function(v,k){s+='<rect x="'+(k*44+2)+'" y="4" width="40" height="22" fill="'+(v<=r[2]?(v>=85?'#b91c1c':'#0f766e'):'#e2e8f0')+'"/><text x="'+(k*44+22)+'" y="19" font-size="10" text-anchor="middle" fill="'+(v<=r[2]?'#fff':'#64748b')+'">'+v+'%</text>'});
+ s+='<text x="2" y="40" font-size="9" fill="#64748b">schwächste Reifen, mit denen die Runde noch klappt: '+r[2]+' % (Reserve = 100 % − Verlust, den man verkraftet: '+(100-r[2])+' % Gripverlust)</text>';document.getElementById('svgR').innerHTML=s;
+ document.getElementById('msgAP').innerHTML=VAR==0?(r[2]>=90?'<span class="bad">Zeit super, aber Reserve '+r[2]+' %: schon bei wenigen Prozent weniger Grip scheitert die Runde. Dieses Setup würdest du nicht ins Auto bauen.</span>':'Mehr ayPlan kauft Zeit und bezahlt Reserve.'):'In der Repo-Variante bleibt die Reserve fast überall bei 60 % – das Profil ist durch die Knick-Artefakte ohnehin zu vorsichtig. Wechsle auf „Guide", um den Zielkonflikt zu sehen.'}
+tog('varT',['Guide (±3)','Repo (±1)'],function(i){VAR=i;apdraw();knobDraw();try{document.getElementById('varT2').children[i].click()}catch(e){}},0);
+tog('varT2',['Guide (±3)','Repo (±1)'],function(i){VAR=i;apdraw();knobDraw()},0);
+var KN=['ayPlan','Ld0','kLd','LdMax','ABrake','AAccel','kv','safety'];
+var sel2=document.getElementById('knob');KN.forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k;sel2.appendChild(o)});
+function knobDraw(){var k=document.getElementById('knob').value||'ayPlan';var rows=D.S[VAR==0?'3':'1'][k];var t='<tr><th>'+k+'</th><th class="n">Zeit</th><th class="n">Reserve</th><th class="n">Clearance</th><th class="n">am Limit</th></tr>';
+ rows.forEach(function(r){t+=r[1]==null?'<tr><td>'+r[0]+'</td><td colspan="4" class="bad">'+r[4]+'</td></tr>':'<tr><td>'+fmt(r[0],r[0]<1?2:1)+'</td><td class="n">'+fmt(r[1],2)+' s</td><td class="n">'+r[2]+' %</td><td class="n">'+fmt(r[3],1)+' mm</td><td class="n">'+r[4]+' / '+r[5]+'</td></tr>'});document.getElementById('knobTab').innerHTML=t}
+var PRED=[['safety',['0','-'],['+'],['0']],['ayPlan',['+'],['0'],['-']],['ABrake',['+'],['-'],['-']],['AAccel',['+'],['-'],['-','0']],['Ld0',['+','0'],['-'],['+','0']],['kLd',['+','0'],['-'],['+','0']],['LdMax',['0'],['0'],['0']],['kv',['+'],['0'],['-']]];
+(function(){var t='<tr><th>Wert ↑</th><th>Rundenzeit</th><th>Clearance</th><th>Reserve (klein = gut)</th></tr>';PRED.forEach(function(r,i){t+='<tr><td><code>'+r[0]+'</code></td>';for(var j=0;j<3;j++)t+='<td><select id="p'+i+'_'+j+'"><option value="">?</option><option value="+">+ besser</option><option value="-">− schlechter</option><option value="0">0 egal</option></select></td>';t+='</tr>'});document.getElementById('pred').innerHTML=t})();
+function predCheck(){var ok=0,tot=24,wrong=[];PRED.forEach(function(r,i){for(var j=0;j<3;j++){var e=document.getElementById('p'+i+'_'+j),v=e.value;var good=r[j+1].indexOf(v)>=0;e.style.background=v==''?'':(good?'#dcfce7':'#fee2e2');if(good)ok++;else if(v!='')wrong.push(r[0])}});
+ var m=document.getElementById('predMsg');m.style.display='block';m.innerHTML='<b>'+ok+' von 24</b> stimmen mit den Guide-Messungen überein (rot = daneben, grün = passt). Hinweise: <code>safety</code> bringt Clearance fast kostenlos; <code>ayPlan</code> und <code>kv</code> kaufen Zeit mit Reserve; <code>Ld0</code> tauscht Clearance gegen Reserve; <code>LdMax</code> tut nichts.'}
+function ldcalc(){var v=+document.getElementById('vv').value;document.getElementById('vL').textContent=v.toFixed(2);var raw=0.16+0.08*v,cap=Math.min(0.35,raw);
+ document.getElementById('kvLd').innerHTML='<div><small>Formel Ld0 + kLd·v</small><span class="big">'+fmt(raw,3)+' m</span></div><div><small>nach Deckel 0,35</small><span class="big">'+fmt(cap,3)+' m</span></div><div><small>Deckel aktiv?</small><span class="big '+(raw>0.35?'bad':'ok')+'">'+(raw>0.35?'ja':'nein')+'</span></div>';
+ var ld=+document.getElementById('ld').value;document.getElementById('ldL').textContent=fmt(ld,2);var d=Math.atan(2*0.12*Math.sin(15*Math.PI/180)/ld)*180/Math.PI;
+ document.getElementById('kvDel').innerHTML='<div><small>Lenkwinkel δ</small><span class="big">'+fmt(d,1)+'°</span></div><div><small>von Volllenkung 22°</small><span class="big">'+fmt(Math.min(100,d/22*100),0)+' %</span></div>'}
+var CF={0:{n:'Guide (±3)',cfg:{safety:0.08,ayPlan:1.10,ABrake:2.5,AAccel:4,Ld0:0.10,kLd:0.08,LdMax:0.35,kv:140},real:[10.96,47.6,70],oval:[3.92,55.1,60],note:'Findet 10,96 s – knapp unter der 11,00-s-Grenze von Ziel F.'},
+ 1:{n:'Repo (±1)',cfg:{safety:0.08,ayPlan:1.40,ABrake:8,AAccel:10,Ld0:0.10,kLd:0.12,LdMax:0.35,kv:140},real:[10.92,38.7,65],oval:[4.08,45.5,60],note:'Das ±1-Profil ist so vorsichtig, dass man viel „wetten" kann (ayPlan 1,4), ohne die Reserve zu verlieren.'}};
+tog('cfgT',['Guide (±3)','Repo (±1)'],function(i){var c=CF[i],b='<b>cfg-Block für '+c.n+'</b><table>';for(var k in c.cfg)b+='<tr><td><code>cfg.'+k+'</code></td><td class="n">'+c.cfg[k]+'</td></tr>';
+ document.getElementById('cfgBox').innerHTML=b+'</table>';
+ function row(n,v,ok){return '<tr><td>'+n+'</td><td class="n">'+fmt(v[0],2)+' s</td><td class="n">'+fmt(v[1],1)+' mm</td><td class="n">'+v[2]+' %</td></tr>'}
+ var S_=c.real[1]>=35&&c.real[2]<=70&&c.real[0]<11.6,F_=c.real[0]<=11&&c.real[1]>=25&&c.real[2]<=70;
+ document.getElementById('cfgRes').innerHTML='<b>Ergebnis</b><table><tr><th></th><th class="n">Zeit</th><th class="n">Clearance</th><th class="n">Reserve</th></tr>'+row('echte Strecke',c.real)+row('Oval',c.oval)+'</table><p>Ziel S: <span class="'+(S_?'ok':'bad')+'">'+(S_?'erfüllt':'nicht erfüllt')+'</span> · Ziel F: <span class="'+(F_?'ok':'bad')+'">'+(F_?'erfüllt':'nicht erfüllt')+'</span> · Oval läuft mit denselben Werten ✓</p><small>'+c.note+'</small>'},0);
+legDraw();scalc();apdraw();knobDraw();ldcalc();
+</script></body></html>

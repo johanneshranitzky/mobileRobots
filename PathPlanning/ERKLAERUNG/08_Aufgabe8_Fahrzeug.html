@@ -1,0 +1,198 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Aufgabe 8 – Das Fahrzeug in der Suche</title><style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mut:#5b6675;--acc:#0f766e;--acc2:#b45309;--bad:#b91c1c;--ok:#15803d;--line:#dde2e8;--soft:#eef6f5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:#0b3b38;color:#fff;padding:28px 20px}header .w,main{max-width:960px;margin:0 auto}
+header h1{margin:0 0 6px;font-size:1.7rem}header p{margin:0;opacity:.85}
+main{padding:20px}
+h2{margin:34px 0 10px;font-size:1.35rem;border-left:5px solid var(--acc);padding-left:10px}
+h3{margin:18px 0 6px;font-size:1.05rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:12px 0}
+.note{background:var(--soft);border-left:4px solid var(--acc);padding:10px 14px;border-radius:6px;margin:12px 0}
+.warn{background:#fff7ed;border-left:4px solid var(--acc2);padding:10px 14px;border-radius:6px;margin:12px 0}
+.exam{background:#eef2ff;border-left:4px solid #4f46e5;padding:10px 14px;border-radius:6px;margin:12px 0}
+table{border-collapse:collapse;width:100%;margin:8px 0;font-size:.93rem}th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}th{background:#f0f3f6}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.hl{background:#fef3c7}.bad{color:var(--bad);font-weight:600}.ok{color:var(--ok);font-weight:600}
+code{background:#eef1f4;padding:1px 5px;border-radius:4px;font-size:.9em}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:1fr 1fr}@media(max-width:760px){.g2{grid-template-columns:1fr}}
+.tog{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:6px 0}
+.tog button{border:0;background:#fff;padding:7px 14px;cursor:pointer;font:inherit}.tog button.on{background:var(--acc);color:#fff}
+input[type=range]{width:100%}label{font-size:.92rem;color:var(--mut)}
+.big{font-size:1.5rem;font-weight:700;font-variant-numeric:tabular-nums}.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:8px 0}
+.kv div{background:#f3f6f8;border-radius:8px;padding:8px 10px}.kv small{display:block;color:var(--mut)}
+details{margin:8px 0}summary{cursor:pointer;font-weight:600}
+svg text{font-family:inherit}
+.pill{display:inline-block;padding:1px 8px;border-radius:99px;background:#e2e8f0;font-size:.8rem}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}.flow div{flex:1;min-width:120px;background:#f3f6f8;border:1px solid var(--line);border-radius:8px;padding:8px;font-size:.88rem}.flow b{display:block;color:var(--acc)}
+select{font:inherit;padding:3px 6px}
+</style></head><body><header><div class="w"><h1>Aufgabe 8 – Das Fahrzeug in der Suche</h1><p>Was im Code passiert, wie sich die Zahlen auswirken und wie die Ausgabe entsteht</p></div></header><main>
+<div class="warn"><b>Ehrlich vorweg:</b> Ich konnte MATLAB hier nicht starten. Alle Ausgaben auf dieser Seite stammen aus einer Nachrechnung des Labors (gleiche Formeln, gleiche Reihenfolge der Schritte), die jede Tabelle im Guide für Kapitel 08 exakt wiedergibt. Lass die Live Script <code>LS08_Fahrzeug.m</code> einmal in MATLAB laufen und vergleiche – dort steht bei jeder Ausgabe, was herauskommen muss.</div>
+
+<h2>1. Was ist die Aufgabe – in drei Sätzen</h2>
+<div class="card">
+Bisher hat der Algorithmus ein Feld nach dem anderen betreten – so wie eine Spielfigur auf einem Brett. Ein Auto ist aber <b>lang</b> (22 cm, nur 10,5 cm breit), kann nicht seitlich rutschen und nicht auf der Stelle drehen. Aufgabe 8: Wir bauen das Auto in die Suche ein, indem jeder <b>Knoten eine Pose</b> (x, y, Richtung θ) und jeder <b>Zug ein Kurvenstück</b> ist, das das Auto wirklich fahren kann.
+</div>
+
+<h2>2. Was ich gemacht habe</h2>
+<div class="card">
+<ul>
+<li><b>Repo geprüft:</b> <code>tasks/car_primitives.m</code> und <code>tasks/car_neighbors.m</code> sind in deinem Fork schon fertig geschrieben (Commit „Solve chapter 08"). Ich habe nichts daran geändert.</li>
+<li><b>Jede Zeile nachgerechnet</b> und gegen den Simulator und die 8 Prüffälle des Repos geprüft.</li>
+<li><b>Live Script <code>LS08_Fahrzeug.m</code></b> geschrieben: erklärt Abschnitt für Abschnitt, führt die echten Befehle aus (<code>car_primitives</code>, <code>check_car_primitives</code>, <code>check_car_neighbors</code>, <code>experiment_cc_point_vs_model</code>) und sagt dazu, welche Ausgabe richtig ist.</li>
+<li><b>Diese Seite:</b> zeigt, was der Code tut, wie sich jede Zahl auswirkt und wie die Ausgabe zustande kommt – damit du es im Gespräch erklären kannst.</li>
+</ul>
+</div>
+
+<h2>3. Vorher – nachher</h2>
+<table>
+<tr><th></th><th>Kapitel 02–06 (Raster)</th><th>Kapitel 08 (Auto)</th></tr>
+<tr><td><b>Knoten</b></td><td>Zelle (Zeile, Spalte)</td><td>Pose (x, y, θ) auf Gitter 10 cm × 10 cm × 22,5° (16 Richtungen)</td></tr>
+<tr><td><b>Zug</b></td><td>ein Feld nach links/rechts/oben/unten</td><td>ein Bogen von 0,119 m bei einer von 5 Lenkstufen (−22°, −11°, 0°, +11°, +22°)</td></tr>
+<tr><td><b>Ist der Zug erlaubt?</b></td><td>Zielzelle frei?</td><td>Passt das <b>ganze gedrehte Rechteck</b> 22 × 10,5 cm an 4 Stellen entlang des Bogens an keiner Wand vorbei?</td></tr>
+<tr><td><b>Kosten</b></td><td>1 (bzw. 1,41 diagonal)</td><td>Bogenlänge 0,119 + 0,02·|Lenkstufe| (Lenken kostet minimal extra)</td></tr>
+<tr><td><b>Heuristik</b></td><td>Luftlinie / Oktil</td><td>Luftlinie (wie vorher, bleibt zulässig)</td></tr>
+</table>
+
+<h2>4. Die Bögen – interaktiv</h2>
+<p>Das Auto steht im Ursprung und schaut nach rechts (+x). Stelle den Lenkeinschlag ein und sieh, wo ein Bogen endet. Die Formeln dahinter:</p>
+<div class="card">
+<code>β = atan( lr/L · tan δ )</code> &nbsp;·&nbsp; <code>dθ/ds = cos β · tan δ / L</code> &nbsp;·&nbsp; Position: in 4 Teilschritten mit Richtung <code>θ_mitte + β</code>.<br>
+<small>Merke: <b>Die Geschwindigkeit steht nicht in der Formel.</b> Sie kürzt sich weg (dθ/dt geteilt durch v). Deshalb kann die Suche in Metern rechnen und das Tempo später behandeln.</small>
+</div>
+<div class="card">
+<label>Lenkung: <b id="pctL">100</b> % von 22° (δ = <span id="dL">22</span>°)</label>
+<input type="range" id="pct" min="-100" max="100" step="5" value="100" oninput="draw()">
+<div class="tog" id="modeT"></div> <small>← Wo in jedem Teilschritt die Richtung abgelesen wird (im Code: <b>Mitte</b>).</small>
+<svg id="svgP" viewBox="-0.02 -0.09 0.20 0.18" style="width:100%;max-height:340px;background:#fbfcfd;border:1px solid var(--line);border-radius:8px"></svg>
+<div class="kv" id="kvP"></div>
+<div id="msgP" class="note"></div>
+</div>
+
+<h2>5. Warum der Bogen genau 0,119 m lang ist</h2>
+<div class="card">
+Es gibt nur 16 gespeicherte Richtungen, ein Schritt = 2π/16 = 0,3927 rad = 22,5°. Ein Zug muss <b>genau</b> auf eine gespeicherte Richtung enden. Volle Lenkung dreht 3,300 rad pro Meter ⇒ Strecke für genau einen Richtungsschritt: 0,3927 / 3,300 = <b>0,119 m</b>.
+<div style="margin-top:8px"><label>Bogenlänge: <b id="arcL">0.119</b> m</label><input type="range" id="arc" min="0.08" max="0.20" step="0.001" value="0.119" oninput="arcCalc()"></div>
+<div class="kv" id="kvA"></div><div id="msgA" class="note"></div>
+</div>
+
+<h2>6. <code>car_neighbors</code> – drehen, dann verschieben</h2>
+<p>Die fünf Bögen sind im <i>Fahrzeug-</i>Koordinatensystem gerechnet (Auto im Ursprung, schaut nach +x). Für ein Auto irgendwo auf der Karte müssen sie <b>gedreht und verschoben</b> werden:</p>
+<div class="card"><code>nx = x + dx·cosθ − dy·sinθ</code> &nbsp; <code>ny = y + dx·sinθ + dy·cosθ</code>
+<div class="tog" id="rotT" style="margin-left:10px"></div>
+<label>Richtung θ des Autos: <b id="thL">90</b>°</label><input type="range" id="th" min="0" max="360" step="5" value="90" oninput="drawN()">
+<svg id="svgN" viewBox="-0.3 -0.3 0.6 0.6" style="width:100%;max-height:360px;background:#fbfcfd;border:1px solid var(--line);border-radius:8px"></svg>
+<div id="msgN" class="note"></div></div>
+
+<h2>7. Die Ausgabe erklärt – Schritt für Schritt</h2>
+
+<h3>7a. Tabelle der 5 Primitive (<code>car_primitives</code>)</h3>
+<table>
+<tr><th>Lenkung δ</th><th class="n">dx [m]</th><th class="n">dy [m]</th><th class="n">dθ</th><th class="n">cost</th></tr>
+<tr><td>−22°</td><td class="n">0,10914</td><td class="n">−0,04559</td><td class="n">−22,502°</td><td class="n">0,139</td></tr>
+<tr><td>−11°</td><td class="n">0,11663</td><td class="n">−0,02277</td><td class="n">−10,993°</td><td class="n">0,129</td></tr>
+<tr><td>0°</td><td class="n">0,11900</td><td class="n">0</td><td class="n">0°</td><td class="n">0,119</td></tr>
+<tr><td>+11°</td><td class="n">0,11663</td><td class="n">+0,02277</td><td class="n">+10,993°</td><td class="n">0,129</td></tr>
+<tr><td>+22°</td><td class="n">0,10914</td><td class="n">+0,04559</td><td class="n">+22,502°</td><td class="n">0,139</td></tr>
+</table>
+<div class="card"><b>Wie liest man das?</b>
+<ul>
+<li><b>Symmetrie:</b> Links und rechts unterscheiden sich nur im Vorzeichen von dy und dθ – ein Auto ist spiegelsymmetrisch. Das ist auch der schnellste Selbsttest für Fehler.</li>
+<li><b>dx wird kleiner</b>, wenn man stärker lenkt (0,119 → 0,109): Der Bogen biegt zur Seite ab, kommt also in x weniger weit. <b>Die Länge entlang des Bogens bleibt 0,119 m.</b> (Sehne 0,1183 m bei Volllenkung.)</li>
+<li><b>dθ = 22,502° ≈ 22,5°:</b> Genau ein Richtungsschritt – das ist die Absicht von arc = 0,119. Die 0,002° sind Rundung (0,119 statt 0,118998…).</li>
+<li><b>cost 0,139 / 0,129 / 0,119:</b> 0,119 + 0,02·|Stufe|. Lenken kostet minimal extra, damit bei gleich langen Routen die gerade gewinnt. Genau deshalb sind in Kapitel 09 die Suchkosten 6,40 m, aber die gefahrene Strecke nur 6,05 m.</li>
+</ul></div>
+<h3>7b. Stimmt die Formel mit dem simulierten Auto überein? (<code>check_car_primitives</code>)</h3>
+<p>Das Check-Skript fährt jeden Bogen im echten Simulator ab. Nachrechnung: Abweichung des Endpunkts <b>0,13 mm</b> bei ±22°, 0,06 mm bei ±11°, 0 bei 0° – gegen 10-cm-Zellen verschwindend klein. Der Beweis: Die Formeln beschreiben das simulierte Auto, nicht irgendein Auto.</p>
+
+<h3>7c. Die 8 Prüffälle (<code>check_car_neighbors</code>)</h3>
+<table>
+<tr><th>#</th><th>Situation (Oval)</th><th class="n">freie Züge</th><th>Warum?</th></tr>
+<tr><td>1</td><td>untere Gerade, nach rechts</td><td class="n">5 von 5</td><td>Frei. <b>Besteht auch mit falscher Drehung</b> (θ=0 ⇒ sinθ=0) – beweist also nichts.</td></tr>
+<tr><td>2</td><td>gleicher Ort, andere Richtung (180°)</td><td class="n">5 von 5</td><td>Jetzt muss gedreht werden (cos=−1). Falsche Drehung fällt hier auf.</td></tr>
+<tr><td>3</td><td>rechte Kurve, Auto zeigt nach oben</td><td class="n">5 von 5</td><td>Alle Bögen passen noch.</td></tr>
+<tr><td>4</td><td>linke Kurve, Auto zeigt nach unten</td><td class="n">5 von 5</td><td>Spiegelfall zu 3.</td></tr>
+<tr><td>5</td><td>obere Gerade nach links</td><td class="n">5 von 5</td><td>Wieder 180°.</td></tr>
+<tr><td>6</td><td>Bogen streift die Innenwand</td><td class="n bad">0 von 5</td><td>Ein Bogen, dessen <b>Mitte</b> die Wand trifft, obwohl Anfang und Ende frei wären. Würde man nur das Ende prüfen, kämen <b>2</b> Züge fälschlich durch (Nachrechnung).</td></tr>
+<tr><td>7</td><td>nur einige Bewegungen frei</td><td class="n">4 von 5</td><td>Ein Bogen versperrt, die anderen nicht.</td></tr>
+<tr><td>8</td><td>quer im Gang</td><td class="n bad">0 von 5</td><td>Das Auto (22 cm lang) passt quer nicht in den Gang. In einer Rastersuche gäbe es das nicht: dort gäbe es nur „Zelle frei". Hier ist <b>derselbe Ort</b> mit anderer Richtung etwas anderes (Fall 1 gegen Fall 8).</td></tr>
+</table>
+
+<h3>7d. Die fünf Nachbarn der Pose (2,90 ; 1,00 ; 90°)</h3>
+<table>
+<tr><th class="n">x</th><th class="n">y</th><th class="n">θ</th><th class="n">cost</th></tr>
+<tr><td class="n">2,94559</td><td class="n">1,10914</td><td class="n">67,5°</td><td class="n">0,139</td></tr>
+<tr><td class="n">2,92277</td><td class="n">1,11663</td><td class="n">79,01°</td><td class="n">0,129</td></tr>
+<tr><td class="n">2,90000</td><td class="n">1,11900</td><td class="n">90°</td><td class="n">0,119</td></tr>
+<tr><td class="n">2,87723</td><td class="n">1,11663</td><td class="n">100,99°</td><td class="n">0,129</td></tr>
+<tr><td class="n">2,85441</td><td class="n">1,10914</td><td class="n">112,5°</td><td class="n">0,139</td></tr>
+</table>
+<div class="card">Das Auto schaut nach oben (90°). Geradeaus (0,119 | 0) wird zu (0 | +0,119): y wächst um 0,119 – die Rotation stimmt. Die nach rechts lenkende Variante (−22°) endet mit 67,5° = 90° − 22,5°, also wieder auf dem 22,5°-Raster. Das ist wichtig, weil <code>cc_pose_index</code> θ auf dieses Raster rundet.</div>
+
+<h3>7e. Das Experiment: Punkt-Planer gegen Auto-Planer</h3>
+<p><b>Teil A</b> plant die Runde auf dem 5-cm-Raster, als wäre das Auto ein Punkt (Wände um 7,25 cm aufgeblasen):</p>
+<table>
+<tr><th>Leg</th><th class="n">Zellen</th><th class="n">Länge</th><th class="n">Expansionen</th></tr>
+<tr><td>1</td><td class="n">69</td><td class="n">3,55 m</td><td class="n">457</td></tr>
+<tr><td>2</td><td class="n">45</td><td class="n">2,44 m</td><td class="n">124</td></tr>
+<tr><td>3</td><td class="n">97</td><td class="n">5,18 m</td><td class="n">1291</td></tr>
+<tr><td>4</td><td class="n">62</td><td class="n">3,39 m</td><td class="n">727</td></tr>
+<tr><td>5</td><td class="n">22</td><td class="n">1,12 m</td><td class="n">23</td></tr>
+<tr><td>6</td><td class="n">70</td><td class="n">3,62 m</td><td class="n">226</td></tr>
+</table>
+<div class="card">
+Route <b>18,12 m</b>, 2848 Expansionen. Beim Fahren: <span class="bad">CRASH bei ca. (5,83 ; 0,70) nach ca. 1,6–1,7 s</span>, nach nur 2,3 m. Das ist die rechte Umkehrkurve (Leg 1).<br><br>
+<b>Warum?</b> Wände sind um 7,25 cm aufgeblasen = halbe Breite (5,25 cm) + 2 cm. Das reicht, wenn das Auto <b>parallel</b> zur Wand fährt. Steht es schräg (ψ), ragt es weiter: <code>d(ψ) = 11·sinψ + 5,25·cosψ</code> (cm) → 0° 5,25 cm ✓, 15° 7,92 cm ✗, 30° 10,05 cm ✗, Maximum 12,2 cm bei 64,5°. Eine feste Aufblähung passt nur für <b>einen</b> Winkel. Größer aufblasen (12,2 cm) würde die engsten Gänge (0,59 m) schließen – dann gäbe es gar keine Route.
+</div>
+<div class="card"><b>Teil B</b> (Auto-Planer): Route 19,23 m, 3657 Expansionen, Runde schließt. Die Punkt-Route ist <b>kürzer</b> (18,12 m) – und trotzdem unfahrbar. Die Auto-Route ist länger, weil die Kurven weiter ausgefahren werden müssen. Der Kern: Bei der Auto-Suche ist eine Pose, deren Rechteck eine Wand berührt, <b>gar kein Nachbar</b> – die Einschränkung liegt im Suchraum, nicht in einer Reparatur hinterher.</div>
+
+<h2>8. Typische Prüfungsfragen – und kurze Antworten</h2>
+<details class="exam"><summary>Was ist jetzt ein Knoten, was ein Zug?</summary>Knoten = Pose (x, y, θ), gerundet auf 10 cm / 10 cm / 22,5°. Zug = ein Bogen von 0,119 m bei einer von fünf Lenkstufen; er endet <i>genau</i> auf einer gespeicherten Richtung.</details>
+<details class="exam"><summary>Was muss car_neighbors können, was graph_neighbors nicht musste?</summary>(1) Bogen vom Fahrzeug- ins Kartensystem drehen, (2) den ganzen Körper entlang des Bogens prüfen, nicht nur den Endpunkt, (3) die Pose auf einen Index abbilden.</details>
+<details class="exam"><summary>Warum kürzt sich die Geschwindigkeit weg?</summary>dθ/ds = (dθ/dt)/v = cosβ·tanδ/L. Die Form eines Bogens hängt nur von Lenkwinkel und Geometrie ab. Darum Planung in Metern (Kap. 08), Tempo später (Kap. 09).</details>
+<details class="exam"><summary>Wozu β (Schwimmwinkel)? Warum cos(θ+β)?</summary>Die Pose ist die Mitte des Körpers, nicht die Hinterachse. Die Mitte bewegt sich nicht in Richtung der Karosserie, sondern leicht seitlich (bis 11,4° bei Volllenkung). Ohne β endet der Bogen 23 mm daneben.</details>
+<details class="exam"><summary>Warum Mittelpunktsverfahren?</summary>Man liest die Richtung in der Mitte des Teilschritts ab (θ + dθ/2). Anfang würde die Kurve unterschätzen, Ende überschätzen (je ca. 5,8 mm bei Volllenkung); die Mitte hebt beide Fehler fast auf (unter 0,05 mm).</details>
+<details class="exam"><summary>Warum ist arc = 0,119 m und nicht 0,15?</summary>Weil ein Bogen bei Volllenkung <i>genau</i> 22,5° drehen soll (3,300 rad/m · 0,119 = 0,3927 rad = 2π/16). Bei 0,15 m würde er 28,4° drehen, das müsste auf das Raster gerundet werden, und gespeicherte und echte Pose laufen auseinander.</details>
+<details class="exam"><summary>Was passiert bei „erst verschieben, dann drehen"?</summary>Man dreht die Position um den Kartenursprung statt den Bogen um das Auto – die Nachbarn landen irgendwo auf der Karte. Leiser Fehler: dy nicht drehen. Der fällt bei θ=0 nicht auf.</details>
+<details class="exam"><summary>Warum scheitert der Punkt-Planer?</summary>Siehe 7e: feste Aufblähung = halbe Breite passt nur parallel zur Wand; das 22 cm lange Auto steht in Kurven schräg und ragt bis 12,2 cm aus.</details>
+</main><script>
+function tog(id,labels,cb,init){var el=document.getElementById(id);el.className='tog';el.innerHTML='';labels.forEach(function(l,i){var b=document.createElement('button');b.textContent=l;b.onclick=function(){[].forEach.call(el.children,function(c){c.className=''});b.className='on';cb(i)};el.appendChild(b)});el.children[init||0].className='on';cb(init||0)}
+function fmt(x,d){return (+x).toFixed(d).replace('.',',')}
+
+
+var L=0.12,lr=0.06,dm=22,arc=0.119,mode=1;
+function prim(pct,nSub,md){var d=pct/100*dm*Math.PI/180,beta=Math.atan(lr/L*Math.tan(d)),dth=Math.cos(beta)*Math.tan(d)/L,ds=arc/nSub,x=0,y=0,th=0,pts=[[0,0,0]];
+ for(var q=0;q<nSub;q++){var t=md==0?th:(md==1?th+dth*ds/2:th+dth*ds);th+=dth*ds;x+=ds*Math.cos(t+beta);y+=ds*Math.sin(t+beta);pts.push([x,y,th])}
+ return {x:x,y:y,th:th,pts:pts,beta:beta,dth:dth,d:d}}
+function car(x,y,th,fill,op){var s=Math.sin(th),c=Math.cos(th),w=0.11,h=0.0525;var p=[[-w,-h],[w,-h],[w,h],[-w,h]].map(function(a){return (x+a[0]*c-a[1]*s).toFixed(4)+','+(-(y+a[0]*s+a[1]*c)).toFixed(4)}).join(' ');return '<polygon points="'+p+'" fill="'+fill+'" fill-opacity="'+op+'" stroke="#334" stroke-width="0.0008"/>'}
+tog('modeT',['Richtung am Anfang','Richtung in der Mitte (Code)','Richtung am Ende'],function(i){mode=i;draw()},1);
+function draw(){var pct=+document.getElementById('pct').value;document.getElementById('pctL').textContent=pct;document.getElementById('dL').textContent=(pct*dm/100).toFixed(1);
+ var r=prim(pct,4,mode),ref=prim(pct,2000,1),s='';
+ s+=car(0,0,0,'#94a3b8',0.25)+car(ref.x,ref.y,ref.th,'#0f766e',0.18);
+ var pr=prim(pct,400,1).pts.map(function(p){return p[0].toFixed(4)+','+(-p[1]).toFixed(4)}).join(' ');
+ s+='<polyline points="'+pr+'" fill="none" stroke="#0f766e" stroke-width="0.0018"/>';
+ s+='<polyline points="'+r.pts.map(function(p){return p[0].toFixed(4)+','+(-p[1]).toFixed(4)}).join(' ')+'" fill="none" stroke="#b45309" stroke-width="0.0012" stroke-dasharray="0.003"/>';
+ r.pts.forEach(function(p){s+='<circle cx="'+p[0].toFixed(4)+'" cy="'+(-p[1]).toFixed(4)+'" r="0.0022" fill="#b45309"/>'});
+ s+='<circle cx="'+ref.x.toFixed(4)+'" cy="'+(-ref.y).toFixed(4)+'" r="0.0028" fill="none" stroke="#0f766e" stroke-width="0.0012"/>';
+ document.getElementById('svgP').innerHTML=s;
+ var err=Math.hypot(r.x-ref.x,r.y-ref.y)*1000;
+ document.getElementById('kvP').innerHTML='<div><small>β (Schwimmwinkel)</small><span class="big">'+fmt(r.beta*180/Math.PI,2)+'°</span></div><div><small>dθ/ds</small><span class="big">'+fmt(r.dth,3)+'</span> rad/m</div><div><small>Radius R</small><span class="big">'+(Math.abs(r.dth)<1e-6?'∞':fmt(1/Math.abs(r.dth),3))+'</span> m</div><div><small>dx / dy</small><span class="big">'+fmt(r.x,5)+' / '+fmt(r.y,5)+'</span></div><div><small>dθ am Bogenende</small><span class="big">'+fmt(r.th*180/Math.PI,2)+'°</span></div><div><small>Fehler gg. exakt</small><span class="big">'+fmt(err,3)+' mm</span></div>';
+ var m=['Mit der Richtung am <b>Anfang</b> des Teilschritts wird der Bogen jedes Mal etwas zu spät eingelenkt – bei Volllenkung endet er ca. 5,8 mm neben dem exakten Punkt (Zielpunkt zu weit vorne).','<b>Mitte</b> (so im Code): bei 4 Teilschritten bleibt der Fehler gegenüber der exakten Kurve unter 0,05 mm – gut hundertmal kleiner als bei Anfang oder Ende (≈ 5,8 mm).','Mit der Richtung am <b>Ende</b> wird zu früh zu stark gelenkt – gleicher Betrag (≈ 5,8 mm), umgekehrtes Vorzeichen. Der Mittelwert aus beiden ist fast exakt: genau das macht die Mitte.'];
+ document.getElementById('msgP').innerHTML=m[mode]+' <span class="pill">grau: Start, grün: exakter Bogen, orange: 4 Teilschritte</span>'}
+function arcCalc(){var a=+document.getElementById('arc').value;document.getElementById('arcL').textContent=a.toFixed(3);
+ var d=dm*Math.PI/180,beta=Math.atan(lr/L*Math.tan(d)),dth=Math.cos(beta)*Math.tan(d)/L,turn=dth*a,step=2*Math.PI/16,steps=turn/step;
+ document.getElementById('kvA').innerHTML='<div><small>Drehung bei Volllenkung</small><span class="big">'+fmt(turn*180/Math.PI,2)+'°</span></div><div><small>in Richtungsschritten</small><span class="big">'+fmt(steps,3)+'</span></div><div><small>exakte Bogenlänge</small><span class="big">'+fmt(step/dth,4)+' m</span></div>';
+ var ok=Math.abs(steps-1)<0.003;document.getElementById('msgA').innerHTML=ok?'<span class="ok">Genau 1,000 Richtungsschritt.</span> Der Zug landet exakt auf einer gespeicherten Richtung – gespeicherte und echte Pose stimmen überein.':'Landet <b>zwischen</b> zwei gespeicherten Richtungen ('+fmt(steps,3)+' Schritte). Die Suche müsste runden ⇒ nach vielen Zügen laufen Plan und Wirklichkeit auseinander (Route „gültig", aber nicht fahrbar).'}
+var rotMode=0;tog('rotT',['richtig: dx und dy drehen','Fehler: dy nicht gedreht','Fehler: erst verschieben, dann drehen'],function(i){rotMode=i;drawN()},0);
+function drawN(){var th=+document.getElementById('th').value*Math.PI/180;document.getElementById('thL').textContent=Math.round(th*180/Math.PI);
+ var ct=Math.cos(th),sn=Math.sin(th),s='<rect x="-0.3" y="-0.3" width="0.6" height="0.6" fill="none"/>';
+ var pr=[-100,-50,0,50,100].map(function(p){return prim(p,4,1)}),px=0.0,py=0.0,pts=[];
+ s+=car(0,0,th,'#94a3b8',0.35);
+ pr.forEach(function(p,i){var nx,ny;
+  if(rotMode==0){nx=p.x*ct-p.y*sn;ny=p.x*sn+p.y*ct}else if(rotMode==1){nx=p.x*ct;ny=p.x*sn+p.y}else{var ox=0.1,oy=0.05;nx=(p.x+ox)*ct-(p.y+oy)*sn-0.0;ny=(p.x+oy*0+ox)*sn+(p.y+oy)*ct}
+  var col=['#b91c1c','#d97706','#0f766e','#2563eb','#7c3aed'][i];
+  s+='<line x1="0" y1="0" x2="'+nx.toFixed(4)+'" y2="'+(-ny).toFixed(4)+'" stroke="'+col+'" stroke-width="0.002"/><circle cx="'+nx.toFixed(4)+'" cy="'+(-ny).toFixed(4)+'" r="0.006" fill="'+col+'"/>'});
+ document.getElementById('svgN').innerHTML=s;
+ var m=['Die fünf Enden liegen als Fächer <b>vor dem Auto</b> (grau), unabhängig von seiner Richtung – wie es sein muss.','<b>dy nicht gedreht:</b> Bei θ = 0° und 180° sieht es fast richtig aus (sinθ = 0), bei 90° kollabiert der Fächer. Genau dieser Fehler versteckt sich im Start (θ = 0) und taucht erst in Kurven auf.','<b>Erst verschieben, dann drehen:</b> Die Punkte werden um den Kartenursprung gedreht und wandern mit θ über die Karte, statt am Auto zu bleiben.'];
+ document.getElementById('msgN').innerHTML=m[rotMode]}
+draw();arcCalc();drawN();
+</script></body></html>
